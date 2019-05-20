@@ -72,10 +72,6 @@ server {
     ssl_dhparam /home/yellowtent/boxdata/dhparams.pem;
     add_header Strict-Transport-Security "max-age=15768000";
 
-    # https://developer.mozilla.org/en-US/docs/Web/HTTP/X-Frame-Options
-    add_header X-Frame-Options "<%= xFrameOptions %>";
-    proxy_hide_header X-Frame-Options;
-
     # https://github.com/twitter/secureheaders
     # https://www.owasp.org/index.php/OWASP_Secure_Headers_Project#tab=Compatibility_Matrix
     # https://wiki.mozilla.org/Security/Guidelines/Web_Security

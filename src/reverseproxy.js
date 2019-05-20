@@ -392,7 +392,6 @@ function writeAdminNginxConfig(bundle, configFileName, vhost, callback) {
         endpoint: 'admin',
         certFilePath: bundle.certFilePath,
         keyFilePath: bundle.keyFilePath,
-        xFrameOptions: 'SAMEORIGIN',
         robotsTxtQuoted: JSON.stringify('User-agent: *\nDisallow: /\n')
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
@@ -457,8 +456,7 @@ function writeAppNginxConfig(app, bundle, callback) {
         endpoint: endpoint,
         certFilePath: bundle.certFilePath,
         keyFilePath: bundle.keyFilePath,
-        robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null,
-        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN'    // once all apps have been updated/
+        robotsTxtQuoted: app.robotsTxt ? JSON.stringify(app.robotsTxt) : null
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
 
@@ -487,8 +485,7 @@ function writeAppRedirectNginxConfig(app, fqdn, bundle, callback) {
         endpoint: 'redirect',
         certFilePath: bundle.certFilePath,
         keyFilePath: bundle.keyFilePath,
-        robotsTxtQuoted: null,
-        xFrameOptions: 'SAMEORIGIN'
+        robotsTxtQuoted: null
     };
     var nginxConf = ejs.render(NGINX_APPCONFIG_EJS, data);
 

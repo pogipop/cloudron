@@ -69,7 +69,7 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
     'apps.health', 'apps.containerId', 'apps.manifestJson', 'apps.httpPort', 'subdomains.subdomain AS location', 'subdomains.domain',
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.label', 'apps.tagsJson',
-    'apps.xFrameOptions', 'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
+    'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
     'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate',
     'apps.dataDir', 'apps.ts', 'apps.healthTime' ].join(',');
 
@@ -120,9 +120,6 @@ function postProcess(result) {
     result.accessRestriction = safe.JSON.parse(result.accessRestrictionJson);
     if (result.accessRestriction && !result.accessRestriction.users) result.accessRestriction.users = [];
     delete result.accessRestrictionJson;
-
-    // TODO remove later once all apps have this attribute
-    result.xFrameOptions = result.xFrameOptions || 'SAMEORIGIN';
 
     result.sso = !!result.sso; // make it bool
     result.enableBackup = !!result.enableBackup; // make it bool
@@ -279,7 +276,6 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     const accessRestriction = data.accessRestriction || null;
     const accessRestrictionJson = JSON.stringify(accessRestriction);
     const memoryLimit = data.memoryLimit || 0;
-    const xFrameOptions = data.xFrameOptions || '';
     const installationState = data.installationState || exports.ISTATE_PENDING_INSTALL;
     const restoreConfigJson = data.restoreConfig ? JSON.stringify(data.restoreConfig) : null; // used when cloning
     const sso = 'sso' in data ? data.sso : null;
@@ -293,10 +289,10 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
     var queries = [];
 
     queries.push({
-        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions,'
+        query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, '
             + 'restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson) '
-            + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, xFrameOptions, restoreConfigJson,
+            + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, restoreConfigJson,
             sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson ]
     });
 

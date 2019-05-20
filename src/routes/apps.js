@@ -107,8 +107,6 @@ function installApp(req, res, next) {
 
     if ('memoryLimit' in data && typeof data.memoryLimit !== 'number') return next(new HttpError(400, 'memoryLimit is not a number'));
 
-    if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
-
     if ('sso' in data && typeof data.sso !== 'boolean') return next(new HttpError(400, 'sso must be a boolean'));
     if ('enableBackup' in data && typeof data.enableBackup !== 'boolean') return next(new HttpError(400, 'enableBackup must be a boolean'));
     if ('enableAutomaticUpdate' in data && typeof data.enableAutomaticUpdate !== 'boolean') return next(new HttpError(400, 'enableAutomaticUpdate must be a boolean'));
@@ -166,7 +164,6 @@ function configureApp(req, res, next) {
     if (!data.cert && data.key) return next(new HttpError(400, 'cert must be provided'));
 
     if ('memoryLimit' in data && typeof data.memoryLimit !== 'number') return next(new HttpError(400, 'memoryLimit is not a number'));
-    if (data.xFrameOptions && typeof data.xFrameOptions !== 'string') return next(new HttpError(400, 'xFrameOptions must be a string'));
 
     if ('enableBackup' in data && typeof data.enableBackup !== 'boolean') return next(new HttpError(400, 'enableBackup must be a boolean'));
     if ('enableAutomaticUpdate' in data && typeof data.enableAutomaticUpdate !== 'boolean') return next(new HttpError(400, 'enableAutomaticUpdate must be a boolean'));

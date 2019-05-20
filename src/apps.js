@@ -90,7 +90,6 @@ var appdb = require('./appdb.js'),
     taskmanager = require('./taskmanager.js'),
     TransformStream = require('stream').Transform,
     updateChecker = require('./updatechecker.js'),
-    url = require('url'),
     util = require('util'),
     uuid = require('uuid'),
     validator = require('validator'),
@@ -241,20 +240,6 @@ function validateMemoryLimit(manifest, memoryLimit) {
     return null;
 }
 
-// https://tools.ietf.org/html/rfc7034
-function validateXFrameOptions(xFrameOptions) {
-    assert.strictEqual(typeof xFrameOptions, 'string');
-
-    if (xFrameOptions === 'DENY') return null;
-    if (xFrameOptions === 'SAMEORIGIN') return null;
-
-    var parts = xFrameOptions.split(' ');
-    if (parts.length !== 2 || parts[0] !== 'ALLOW-FROM') return new AppsError(AppsError.BAD_FIELD, 'xFrameOptions must be "DENY", "SAMEORIGIN" or "ALLOW-FROM uri"' );
-
-    var uri = url.parse(parts[1]);
-    return (uri.protocol === 'http:' || uri.protocol === 'https:') ? null : new AppsError(AppsError.BAD_FIELD, 'xFrameOptions ALLOW-FROM uri must be a valid http[s] uri' );
-}
-
 function validateDebugMode(debugMode) {
     assert.strictEqual(typeof debugMode, 'object');
 
@@ -372,7 +357,7 @@ function getAppConfig(app) {
         accessRestriction: app.accessRestriction,
         portBindings: app.portBindings,
         memoryLimit: app.memoryLimit,
-        xFrameOptions: app.xFrameOptions || 'SAMEORIGIN',
+
         robotsTxt: app.robotsTxt,
         sso: app.sso,
         alternateDomains: app.alternateDomains || [],
@@ -389,7 +374,7 @@ function removeInternalFields(app) {
     return _.pick(app,
         'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
         'location', 'domain', 'fqdn', 'mailboxName',
-        'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit', 'xFrameOptions',
+        'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts', 'tags',
         'label', 'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate', 'dataDir');
 }
@@ -585,7 +570,6 @@ function install(data, user, auditSource, callback) {
         cert = data.cert || null,
         key = data.key || null,
         memoryLimit = data.memoryLimit || 0,
-        xFrameOptions = data.xFrameOptions || 'SAMEORIGIN',
         sso = 'sso' in data ? data.sso : null,
         debugMode = data.debugMode || null,
         robotsTxt = data.robotsTxt || null,
@@ -618,9 +602,6 @@ function install(data, user, auditSource, callback) {
         if (error) return callback(error);
 
         error = validateMemoryLimit(manifest, memoryLimit);
-        if (error) return callback(error);
-
-        error = validateXFrameOptions(xFrameOptions);
         if (error) return callback(error);
 
         error = validateDebugMode(debugMode);
@@ -679,7 +660,6 @@ function install(data, user, auditSource, callback) {
             var data = {
                 accessRestriction: accessRestriction,
                 memoryLimit: memoryLimit,
-                xFrameOptions: xFrameOptions,
                 sso: sso,
                 debugMode: debugMode,
                 mailboxName: mailboxName,
@@ -758,12 +738,6 @@ function configure(appId, data, user, auditSource, callback) {
         if ('memoryLimit' in data) {
             values.memoryLimit = data.memoryLimit;
             error = validateMemoryLimit(app.manifest, values.memoryLimit);
-            if (error) return callback(error);
-        }
-
-        if ('xFrameOptions' in data) {
-            values.xFrameOptions = data.xFrameOptions;
-            error = validateXFrameOptions(values.xFrameOptions);
             if (error) return callback(error);
         }
 
@@ -1138,7 +1112,6 @@ function clone(appId, data, user, auditSource, callback) {
                     installationState: appdb.ISTATE_PENDING_CLONE,
                     memoryLimit: app.memoryLimit,
                     accessRestriction: app.accessRestriction,
-                    xFrameOptions: app.xFrameOptions,
                     restoreConfig: { backupId: backupId, backupFormat: backupInfo.format },
                     sso: !!app.sso,
                     mailboxName: mailboxName,
