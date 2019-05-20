@@ -2,6 +2,7 @@
 /* global it:false */
 /* global describe:false */
 /* global before:false */
+/* global beforeEach:false */
 /* global after:false */
 
 'use strict';
@@ -594,15 +595,32 @@ describe('dns provider', function () {
         });
     });
 
-    xdescribe('namecheap', function () {
-        let username = 'namecheapuser';
-        let apiKey = 'API_KEY';
+    describe('namecheap', function () {
+        const NAMECHEAP_ENDPOINT = 'https://api.namecheap.com';
+        const username = 'namecheapuser';
+        const token = 'namecheaptoken';
+
+        // the success answer is always the same
+        const SET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+            <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+            <Errors />
+            <Warnings />
+            <RequestedCommand>namecheap.domains.dns.sethosts</RequestedCommand>
+            <CommandResponse Type="namecheap.domains.dns.setHosts">
+                <DomainDNSSetHostsResult Domain="cloudron.space" IsSuccess="true">
+                <Warnings />
+                </DomainDNSSetHostsResult>
+            </CommandResponse>
+            <Server>PHX01APIEXT03</Server>
+            <GMTTimeDifference>--4:00</GMTTimeDifference>
+            <ExecutionTime>0.408</ExecutionTime>
+            </ApiResponse>`;
 
         before(function (done) {
             DOMAIN_0.provider = 'namecheap';
             DOMAIN_0.config = {
-                username,
-                apiKey
+                username: username,
+                token: token
             };
 
             domains.update(DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE, done);
@@ -613,397 +631,246 @@ describe('dns provider', function () {
         });
 
         it('upsert non-existing record succeeds', function (done) {
-            var req1 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .get('/v2/domains/' + DOMAIN_0.zoneName + '/records')
-                .reply(200, { domain_records: [] });
-            var req2 = nock(DIGITALOCEAN_ENDPOINT).filteringRequestBody(function () { return false; })
-                .post('/v2/domains/' + DOMAIN_0.zoneName + '/records')
-                .reply(201, { domain_record: DOMAIN_RECORD_0 });
+            const GET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+                <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+                <Errors />
+                <Warnings />
+                <RequestedCommand>namecheap.domains.dns.gethosts</RequestedCommand>
+                <CommandResponse Type="namecheap.domains.dns.getHosts">
+                    <DomainDNSGetHostsResult Domain="cloudron.space" EmailType="MX" IsUsingOurDNS="true">
+                    <host HostId="160859434" Name="@" Type="MX" Address="my.nebulon.space." MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400612" Name="@" Type="TXT" Address="v=spf1 a:my.nebulon.space ~all" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    </DomainDNSGetHostsResult>
+                </CommandResponse>
+                <Server>PHX01APIEXT04</Server>
+                <GMTTimeDifference>--4:00</GMTTimeDifference>
+                <ExecutionTime>0.16</ExecutionTime>
+                </ApiResponse>`;
 
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': 'parkingpage.namecheap.com.',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': '@',
-                            'Type': 'URL',
-                            'Address': 'http://www.example-dns-test.com/',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': 'URL Forwarding',
-                            'FriendlyName': 'URL Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
+            var req1 = nock(NAMECHEAP_ENDPOINT).get('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.getHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1]
+                })
+                .reply(200, GET_HOSTS_RETURN);
 
-            let setInternalExpect = [
-                {
-                    'HostId': '614433',
-                    'HostName': 'www',
-                    'RecordType': 'CNAME',
-                    'Address': 'parkingpage.namecheap.com.',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': '',
-                    'FriendlyName': 'CNAME Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    'HostId': '614432',
-                    'HostName': '@',
-                    'RecordType': 'URL',
-                    'Address': 'http://www.example-dns-test.com/',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': 'URL Forwarding',
-                    'FriendlyName': 'URL Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    RecordType: 'A',
-                    HostName: 'test',
-                    Address: '1.2.3.4'
-                }
-            ];
+            var req2 = nock(NAMECHEAP_ENDPOINT).post('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.setHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1],
+
+                    TTL1: '300',
+                    HostName1: '@',
+                    RecordType1: 'MX',
+                    Address1: 'my.nebulon.space.',
+                    EmailType1: 'MX',
+                    MXPref1: '10',
+
+                    TTL2: '300',
+                    HostName2: '@',
+                    RecordType2: 'TXT',
+                    Address2: 'v=spf1 a:my.nebulon.space ~all',
+
+                    TTL3: '300',
+                    HostName3: 'test',
+                    RecordType3: 'A',
+                    Address3: '1.2.3.4',
+                })
+                .reply(200, SET_HOSTS_RETURN);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
-
-                expect(setHostsFake.calledOnce).to.eql(true);
-                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                expect(req1.isDone()).to.be.ok();
+                expect(req2.isDone()).to.be.ok();
 
                 done();
             });
         });
 
         it('upsert multiple non-existing records succeeds', function (done) {
+            const GET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+                <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+                <Errors />
+                <Warnings />
+                <RequestedCommand>namecheap.domains.dns.gethosts</RequestedCommand>
+                <CommandResponse Type="namecheap.domains.dns.getHosts">
+                    <DomainDNSGetHostsResult Domain="cloudron.space" EmailType="MX" IsUsingOurDNS="true">
+                    <host HostId="160859434" Name="@" Type="MX" Address="my.nebulon.space." MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400612" Name="@" Type="TXT" Address="v=spf1 a:my.nebulon.space ~all" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    </DomainDNSGetHostsResult>
+                </CommandResponse>
+                <Server>PHX01APIEXT04</Server>
+                <GMTTimeDifference>--4:00</GMTTimeDifference>
+                <ExecutionTime>0.16</ExecutionTime>
+                </ApiResponse>`;
 
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': 'parkingpage.namecheap.com.',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': '@',
-                            'Type': 'URL',
-                            'Address': 'http://www.example-dns-test.com/',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': 'URL Forwarding',
-                            'FriendlyName': 'URL Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
+            var req1 = nock(NAMECHEAP_ENDPOINT).get('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.getHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1]
+                })
+                .reply(200, GET_HOSTS_RETURN);
 
-            let setInternalExpect = [
-                {
-                    'HostId': '614433',
-                    'HostName': 'www',
-                    'RecordType': 'CNAME',
-                    'Address': 'parkingpage.namecheap.com.',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': '',
-                    'FriendlyName': 'CNAME Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    'HostId': '614432',
-                    'HostName': '@',
-                    'RecordType': 'URL',
-                    'Address': 'http://www.example-dns-test.com/',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': 'URL Forwarding',
-                    'FriendlyName': 'URL Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    RecordType: 'TXT',
-                    HostName: 'test',
-                    Address: '1.2.3.4'
-                },
-                {
-                    RecordType: 'TXT',
-                    HostName: 'test',
-                    Address: '2.3.4.5'
-                },
-                {
-                    RecordType: 'TXT',
-                    HostName: 'test',
-                    Address: '3.4.5.6'
-                }
-            ];
+            var req2 = nock(NAMECHEAP_ENDPOINT).post('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.setHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1],
+
+                    TTL1: '300',
+                    HostName1: '@',
+                    RecordType1: 'MX',
+                    Address1: 'my.nebulon.space.',
+                    EmailType1: 'MX',
+                    MXPref1: '10',
+
+                    TTL2: '300',
+                    HostName2: '@',
+                    RecordType2: 'TXT',
+                    Address2: 'v=spf1 a:my.nebulon.space ~all',
+
+                    TTL3: '300',
+                    HostName3: 'test',
+                    RecordType3: 'TXT',
+                    Address3: '1.2.3.4',
+
+                    TTL4: '300',
+                    HostName4: 'test',
+                    RecordType4: 'TXT',
+                    Address4: '2.3.4.5',
+
+                    TTL5: '300',
+                    HostName5: 'test',
+                    RecordType5: 'TXT',
+                    Address5: '3.4.5.6',
+                })
+                .reply(200, SET_HOSTS_RETURN);
 
             domains.upsertDnsRecords('test', DOMAIN_0.domain, 'TXT', ['1.2.3.4', '2.3.4.5', '3.4.5.6'], function (error) {
                 expect(error).to.eql(null);
-
-                expect(setHostsFake.calledOnce).to.eql(true);
-                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
-
-                done();
-            });
-        });
-
-        it('upsert multiple non-existing MX records succeeds', function (done) {
-
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': 'parkingpage.namecheap.com.',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': '@',
-                            'Type': 'URL',
-                            'Address': 'http://www.example-dns-test.com/',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': 'URL Forwarding',
-                            'FriendlyName': 'URL Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
-
-            let setInternalExpect = [
-                {
-                    'HostId': '614433',
-                    'HostName': 'www',
-                    'RecordType': 'CNAME',
-                    'Address': 'parkingpage.namecheap.com.',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': '',
-                    'FriendlyName': 'CNAME Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    'HostId': '614432',
-                    'HostName': '@',
-                    'RecordType': 'URL',
-                    'Address': 'http://www.example-dns-test.com/',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': 'URL Forwarding',
-                    'FriendlyName': 'URL Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    RecordType: 'MX',
-                    HostName: 'test',
-                    Address: '1.2.3.4',
-                    MXPref: '10'
-                },
-                {
-                    RecordType: 'MX',
-                    HostName: 'test',
-                    Address: '2.3.4.5',
-                    MXPref: '20'
-                },
-                {
-                    RecordType: 'MX',
-                    HostName: 'test',
-                    Address: '3.4.5.6',
-                    MXPref: '30'
-                }
-            ];
-
-            domains.upsertDnsRecords('test', DOMAIN_0.domain, 'MX', ['10 1.2.3.4', '20 2.3.4.5', '30 3.4.5.6'], function (error) {
-                expect(error).to.eql(null);
-
-                expect(setHostsFake.calledOnce).to.eql(true);
-                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                expect(req1.isDone()).to.be.ok();
+                expect(req2.isDone()).to.be.ok();
 
                 done();
             });
         });
 
         it('upsert existing record succeeds', function (done) {
+            const GET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+                <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+                <Errors />
+                <Warnings />
+                <RequestedCommand>namecheap.domains.dns.gethosts</RequestedCommand>
+                <CommandResponse Type="namecheap.domains.dns.getHosts">
+                    <DomainDNSGetHostsResult Domain="cloudron.space" EmailType="MX" IsUsingOurDNS="true">
+                    <host HostId="160859434" Name="@" Type="MX" Address="my.nebulon.space." MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400612" Name="www" Type="CNAME" Address="1.2.3.4" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    </DomainDNSGetHostsResult>
+                </CommandResponse>
+                <Server>PHX01APIEXT04</Server>
+                <GMTTimeDifference>--4:00</GMTTimeDifference>
+                <ExecutionTime>0.16</ExecutionTime>
+                </ApiResponse>`;
 
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': DOMAIN_0.domain,
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': '@',
-                            'Type': 'URL',
-                            'Address': 'http://www.example-dns-test.com/',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': 'URL Forwarding',
-                            'FriendlyName': 'URL Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
+            var req1 = nock(NAMECHEAP_ENDPOINT).get('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.getHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1]
+                })
+                .reply(200, GET_HOSTS_RETURN);
 
-            let setInternalExpect = [
-                {
-                    'HostId': '614433',
-                    'HostName': 'www',
-                    'RecordType': 'CNAME',
-                    'Address': '1.2.3.4',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': '',
-                    'FriendlyName': 'CNAME Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                },
-                {
-                    'HostId': '614432',
-                    'HostName': '@',
-                    'RecordType': 'URL',
-                    'Address': 'http://www.example-dns-test.com/',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': 'URL Forwarding',
-                    'FriendlyName': 'URL Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                }
-            ];
+            var req2 = nock(NAMECHEAP_ENDPOINT).post('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.setHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1],
+
+                    TTL1: '300',
+                    HostName1: '@',
+                    RecordType1: 'MX',
+                    Address1: 'my.nebulon.space.',
+                    EmailType1: 'MX',
+                    MXPref1: '10',
+
+                    TTL2: '300',
+                    HostName2: 'www',
+                    RecordType2: 'CNAME',
+                    Address2: '1.2.3.4'
+                })
+                .reply(200, SET_HOSTS_RETURN);
 
             domains.upsertDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
-
-                expect(setHostsFake.calledOnce).to.eql(true);
-                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                expect(req1.isDone()).to.be.ok();
+                expect(req2.isDone()).to.be.ok();
 
                 done();
             });
         });
 
         it('get succeeds', function(done) {
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': '1.2.3.4',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': 'test',
-                            'Type': 'A',
-                            'Address': '1.2.3.4',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'FriendlyName': 'A Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614431',
-                            'Name': 'test',
-                            'Type': 'A',
-                            'Address': '2.3.4.5',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'FriendlyName': 'A Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
+            const GET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+                <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+                <Errors />
+                <Warnings />
+                <RequestedCommand>namecheap.domains.dns.gethosts</RequestedCommand>
+                <CommandResponse Type="namecheap.domains.dns.getHosts">
+                    <DomainDNSGetHostsResult Domain="cloudron.space" EmailType="MX" IsUsingOurDNS="true">
+                    <host HostId="160859434" Name="@" Type="MX" Address="my.nebulon.space." MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400612" Name="test" Type="A" Address="1.2.3.4" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400613" Name="test" Type="A" Address="2.3.4.5" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    </DomainDNSGetHostsResult>
+                </CommandResponse>
+                <Server>PHX01APIEXT04</Server>
+                <GMTTimeDifference>--4:00</GMTTimeDifference>
+                <ExecutionTime>0.16</ExecutionTime>
+                </ApiResponse>`;
+
+            var req1 = nock(NAMECHEAP_ENDPOINT).get('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.getHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1]
+                })
+                .reply(200, GET_HOSTS_RETURN);
 
             domains.getDnsRecords('test', DOMAIN_0.domain, 'A', function (error, result) {
                 expect(error).to.eql(null);
-
+                expect(req1.isDone()).to.be.ok();
                 expect(result).to.be.an(Array);
                 expect(result.length).to.eql(2);
-                expect(getHostsFake.calledOnce).to.eql(true);
                 expect(result).to.eql(['1.2.3.4', '2.3.4.5']);
 
                 done();
@@ -1011,108 +878,74 @@ describe('dns provider', function () {
         });
 
         it('del succeeds', function (done) {
+            const GET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+                <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+                <Errors />
+                <Warnings />
+                <RequestedCommand>namecheap.domains.dns.gethosts</RequestedCommand>
+                <CommandResponse Type="namecheap.domains.dns.getHosts">
+                    <DomainDNSGetHostsResult Domain="cloudron.space" EmailType="MX" IsUsingOurDNS="true">
+                    <host HostId="160859434" Name="@" Type="MX" Address="my.nebulon.space." MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400612" Name="www" Type="CNAME" Address="1.2.3.4" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    </DomainDNSGetHostsResult>
+                </CommandResponse>
+                <Server>PHX01APIEXT04</Server>
+                <GMTTimeDifference>--4:00</GMTTimeDifference>
+                <ExecutionTime>0.16</ExecutionTime>
+                </ApiResponse>`;
 
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': '1.2.3.4',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': '@',
-                            'Type': 'URL',
-                            'Address': 'http://www.example-dns-test.com/',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': 'URL Forwarding',
-                            'FriendlyName': 'URL Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
-
-            let setInternalExpect = [
-                {
-                    'HostId': '614432',
-                    'HostName': '@',
-                    'RecordType': 'URL',
-                    'Address': 'http://www.example-dns-test.com/',
-                    'MXPref': '10',
-                    'TTL': '1800',
-                    'AssociatedAppTitle': 'URL Forwarding',
-                    'FriendlyName': 'URL Record',
-                    'IsActive': 'true',
-                    'IsDDNSEnabled': 'false'
-                }
-            ];
+            var req1 = nock(NAMECHEAP_ENDPOINT).get('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.getHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1]
+                })
+                .reply(200, GET_HOSTS_RETURN);
 
             domains.removeDnsRecords('www', DOMAIN_0.domain, 'CNAME', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
-
-                expect(setHostsFake.calledOnce).to.eql(true);
-                expect(setHostsFake.calledWith(DOMAIN_0.domain, setInternalExpect)).to.eql(true);
+                expect(req1.isDone()).to.be.ok();
 
                 done();
             });
         });
 
-        it('del succeeds w/ non-present host', function (done) {
+        it('del succeeds with non-existing domain', function (done) {
+            const GET_HOSTS_RETURN = `<?xml version="1.0" encoding="utf-8"?>
+                <ApiResponse Status="OK" xmlns="http://api.namecheap.com/xml.response">
+                <Errors />
+                <Warnings />
+                <RequestedCommand>namecheap.domains.dns.gethosts</RequestedCommand>
+                <CommandResponse Type="namecheap.domains.dns.getHosts">
+                    <DomainDNSGetHostsResult Domain="cloudron.space" EmailType="MX" IsUsingOurDNS="true">
+                    <host HostId="160859434" Name="@" Type="MX" Address="my.nebulon.space." MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    <host HostId="173400612" Name="www" Type="CNAME" Address="1.2.3.4" MXPref="10" TTL="300" AssociatedAppTitle="" FriendlyName="" IsActive="true" IsDDNSEnabled="false" />
+                    </DomainDNSGetHostsResult>
+                </CommandResponse>
+                <Server>PHX01APIEXT04</Server>
+                <GMTTimeDifference>--4:00</GMTTimeDifference>
+                <ExecutionTime>0.16</ExecutionTime>
+                </ApiResponse>`;
 
-            let getHostsReturn = {
-                'Type': 'namecheap.domains.dns.getHosts',
-                'DomainDNSGetHostsResult': {
-                    'Domain': 'example-dns-test.com',
-                    'EmailType': 'FWD',
-                    'IsUsingOurDNS': 'true',
-                    'host': [
-                        {
-                            'HostId': '614433',
-                            'Name': 'www',
-                            'Type': 'CNAME',
-                            'Address': 'parkingpage.namecheap.com.',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': '',
-                            'FriendlyName': 'CNAME Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        },
-                        {
-                            'HostId': '614432',
-                            'Name': '@',
-                            'Type': 'URL',
-                            'Address': 'http://www.example-dns-test.com/',
-                            'MXPref': '10',
-                            'TTL': '1800',
-                            'AssociatedAppTitle': 'URL Forwarding',
-                            'FriendlyName': 'URL Record',
-                            'IsActive': 'true',
-                            'IsDDNSEnabled': 'false'
-                        }
-                    ]
-                }
-            };
+            var req1 = nock(NAMECHEAP_ENDPOINT).get('/xml.response')
+                .query({
+                    ApiUser: username,
+                    ApiKey: token,
+                    UserName: username,
+                    ClientIp: '127.0.0.1',
+                    Command: 'namecheap.domains.dns.getHosts',
+                    SLD: DOMAIN_0.zoneName.split('.')[0],
+                    TLD: DOMAIN_0.zoneName.split('.')[1]
+                })
+                .reply(200, GET_HOSTS_RETURN);
 
             domains.removeDnsRecords('test', DOMAIN_0.domain, 'A', ['1.2.3.4'], function (error) {
                 expect(error).to.eql(null);
-
-                expect(setHostsFake.notCalled).to.eql(true);
+                expect(req1.isDone()).to.be.ok();
 
                 done();
             });
