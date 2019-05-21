@@ -19,7 +19,7 @@ This script collects diagnostic information to help debug server related issues
 
 # We require root
 if [[ ${EUID} -ne 0 ]]; then
-    echo "This script should be run as root." > /dev/stderr
+    echo "This script should be run as root. Run with sudo"
     exit 1
 fi
 
@@ -60,21 +60,6 @@ echo -n "Generating Cloudron Support stats..."
 # clear file
 rm -rf $OUT
 
-ssh_port=$(cat /etc/ssh/sshd_config | grep "Port " | sed -e "s/.*Port //")
-if [[ $SUDO_USER == "" ]]; then
-    ssh_user="root"
-    ssh_folder="/root/.ssh/"
-    authorized_key_file="${ssh_folder}/authorized_keys"
-else
-    ssh_user="$SUDO_USER"
-    ssh_folder="/home/$SUDO_USER/.ssh/"
-    authorized_key_file="${ssh_folder}/authorized_keys"
-fi
-
-echo -e $LINE"SSH"$LINE >> $OUT
-echo "Username: ${ssh_user}" >> $OUT
-echo "Port:     ${ssh_port}" >> $OUT
-
 echo -e $LINE"cloudron.conf"$LINE >> $OUT
 cat /etc/cloudron/cloudron.conf &>> $OUT
 
@@ -106,19 +91,41 @@ iptables -L &>> $OUT
 
 echo "Done"
 
+if [[ "${enableSSH}" == "true" ]]; then
+    ssh_port=$(cat /etc/ssh/sshd_config | grep "Port " | sed -e "s/.*Port //")
+    permit_root_login=$(grep -q ^PermitRootLogin.*yes /etc/ssh/sshd_config && echo "yes" || echo "no")
+
+    # support.js uses similar logic
+    if $(grep -q "ec2\|lightsail\|ami" /etc/cloudron/cloudron.conf); then
+        ssh_user="ubuntu"
+        keys_file="/home/ubuntu/.ssh/authorized_keys"
+    else
+        ssh_user="root"
+        keys_file="/root/.ssh/authorized_keys"
+    fi
+
+    echo -e $LINE"SSH"$LINE >> $OUT
+    echo "Username: ${ssh_user}" >> $OUT
+    echo "Port:     ${ssh_port}" >> $OUT
+    echo "PermitRootLogin: ${permit_root_login}" >> $OUT
+    echo "Key file: ${keys_file}" >> $OUT
+
+    echo -n "Enabling ssh access for the Cloudron support team..."
+    mkdir -p $(dirname "${keys_file}")       # .ssh does not exist sometimes
+    touch "${keys_file}"                # required for concat to work
+    if ! grep -q "${CLOUDRON_SUPPORT_PUBLIC_KEY}" "${keys_file}"; then
+        echo -e "\n${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> "${keys_file}"
+        chmod 600 "${keys_file}"
+        chown "${ssh_user}" "${keys_file}"
+    fi
+
+    echo "Done"
+fi
+
 echo -n "Uploading information..."
 # for some reason not using $(cat $OUT) will not contain newlines!?
 paste_key=$(curl -X POST ${PASTEBIN}/documents --silent -d "$(cat $OUT)" | python3 -c "import sys, json; print(json.load(sys.stdin)['key'])")
 echo "Done"
-
-if [[ "${enableSSH}" == "true" ]]; then
-    echo -n "Enabling ssh access for the Cloudron support team..."
-    mkdir -p "${ssh_folder}"
-    echo -e "\n${CLOUDRON_SUPPORT_PUBLIC_KEY}" >> ${authorized_key_file}
-    chown -R ${ssh_user} "${ssh_folder}"
-    chmod 600 "${authorized_key_file}"
-    echo "Done"
-fi
 
 echo ""
 echo "Please email the following link to support@cloudron.io"

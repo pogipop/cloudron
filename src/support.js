@@ -14,6 +14,7 @@ let assert = require('assert'),
     path = require('path'),
     util = require('util');
 
+// the logic here is also used in the cloudron-support tool
 var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(config.baseDir(), 'authorized_keys') : ((config.provider() === 'ec2' || config.provider() === 'lightsail' || config.provider() === 'ami') ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys'),
     AUTHORIZED_KEYS_USER = config.TEST ? process.getuid() : ((config.provider() === 'ec2' || config.provider() === 'lightsail' || config.provider() === 'ami') ? 'ubuntu' : 'root'),
     AUTHORIZED_KEYS_CMD = path.join(__dirname, 'scripts/remotesupport.sh');
