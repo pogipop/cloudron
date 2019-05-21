@@ -65,8 +65,10 @@ function getApps(req, res, next) {
 function getAppIcon(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
-    const userIconPath = `${paths.APP_ICONS_DIR}/${req.params.id}.user.png`;
-    if (safe.fs.existsSync(userIconPath)) return res.sendFile(userIconPath);
+    if (!req.query.original) {
+        const userIconPath = `${paths.APP_ICONS_DIR}/${req.params.id}.user.png`;
+        if (safe.fs.existsSync(userIconPath)) return res.sendFile(userIconPath);
+    }
 
     const appstoreIconPath = `${paths.APP_ICONS_DIR}/${req.params.id}.png`;
     if (safe.fs.existsSync(appstoreIconPath)) return res.sendFile(appstoreIconPath);
