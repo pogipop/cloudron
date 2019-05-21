@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu -o pipefail
+
 # This script collects diagnostic information to help debug server related issues
 # It also enables SSH access for the cloudron support team
 
