@@ -289,13 +289,25 @@ function checkMx(domain, mailFqdn, callback) {
 
     dns.resolve(mx.domain, mx.type, DNS_OPTIONS, function (error, mxRecords) {
         if (error) return callback(error, mx);
+        if (mxRecords.length === 0) return callback(null, mx);
 
-        if (mxRecords.length !== 0) {
-            mx.status = mxRecords.length == 1 && mxRecords[0].exchange === mailFqdn;
-            mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange + '.'; }).join(' ');
-        }
+        mx.status = mxRecords.length == 1 && mxRecords[0].exchange === mailFqdn;
+        mx.value = mxRecords.map(function (r) { return r.priority + ' ' + r.exchange + '.'; }).join(' ');
 
-        callback(null, mx);
+        if (mx.status) return callback(null, mx); // MX record is "my."
+
+        // cloudflare might create a conflict subdomain (https://support.cloudflare.com/hc/en-us/articles/360020296512-DNS-Troubleshooting-FAQ)
+        dns.resolve(mxRecords[0].exchange, 'A', DNS_OPTIONS, function (error, mxIps) {
+            if (error || mxIps.length !== 1) return callback(null, mx);
+
+            sysinfo.getPublicIp(function (error, ip) {
+                if (error) return callback(null, mx);
+
+                mx.status = mxIps[0] === ip;
+
+                callback(null, mx);
+            });
+        });
     });
 }
 
