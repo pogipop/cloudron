@@ -829,7 +829,7 @@ function configure(appId, data, user, auditSource, callback) {
 
             values.oldConfig = getAppConfig(app);
 
-            debug('Will configure app with id:%s values:%j', appId, values);
+            debug(`configure: id:${appId}`);
 
             appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
@@ -857,7 +857,7 @@ function update(appId, data, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    debug('Will update app with id:%s', appId);
+    debug(`update: id:${appId}`);
 
     get(appId, function (error, app) {
         if (error) return callback(error);
