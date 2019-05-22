@@ -1591,6 +1591,7 @@
 
 [4.0.1]
 * Make it easier to import email
+* Give SFTP access only to admins
 
 [4.0.2]
 * Fix GCDNS crash
@@ -1607,4 +1608,4 @@
 * Fix domain and tag filtering
 * Customizable app icons
 * Remove obsolete X-Frame-Options from nginx configs
-
+* Give SFTP access based on access restriction
