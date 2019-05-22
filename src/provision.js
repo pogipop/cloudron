@@ -78,6 +78,7 @@ ProvisionError.BAD_STATE = 'Bad State';
 ProvisionError.ALREADY_SETUP = 'Already Setup';
 ProvisionError.INTERNAL_ERROR = 'Internal Error';
 ProvisionError.EXTERNAL_ERROR = 'External Error';
+ProvisionError.LICENSE_ERROR = 'License Error';
 ProvisionError.ALREADY_PROVISIONED = 'Already Provisioned';
 
 function setProgress(task, message, callback) {
