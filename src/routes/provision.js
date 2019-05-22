@@ -65,7 +65,7 @@ function setup(req, res, next) {
         if (error && error.reason === ProvisionError.BAD_STATE) return next(new HttpError(409, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
@@ -118,7 +118,7 @@ function restore(req, res, next) {
         if (error && error.reason === ProvisionError.EXTERNAL_ERROR) return next(new HttpError(424, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200));
+        next(new HttpSuccess(200, {}));
     });
 }
 
