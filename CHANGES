@@ -1591,7 +1591,6 @@
 
 [4.0.1]
 * Make it easier to import email
-* Give SFTP access only to admins
 
 [4.0.2]
 * Fix GCDNS crash

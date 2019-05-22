@@ -520,22 +520,25 @@ function userSearchSftp(req, res, next) {
         users.getByUsername(username, function (error, user) {
             if (error) return next(new ldap.OperationsError(error.toString()));
 
-            if (!user.admin) return next(new ldap.InsufficientAccessRightsError('Not authorized'));
+            apps.hasAccessTo(app, user, function (error, hasAccess) {
+                if (error) return next(new ldap.OperationsError(error.toString()));
+                if (!hasAccess) return next(new ldap.InsufficientAccessRightsError('Not authorized'));
 
-            var obj = {
-                dn: ldap.parseDN(`cn=${username}@${appFqdn},ou=sftp,dc=cloudron`).toString(),
-                attributes: {
-                    homeDirectory: path.join('/app/data', app.id, 'data'),
-                    objectclass: ['user'],
-                    objectcategory: 'person',
-                    cn: user.id,
-                    uid: `${username}@${appFqdn}`,  // for bind after search
-                    uidNumber: uidNumber,           // unix uid for ftp access
-                    gidNumber: uidNumber            // unix gid for ftp access
-                }
-            };
+                var obj = {
+                    dn: ldap.parseDN(`cn=${username}@${appFqdn},ou=sftp,dc=cloudron`).toString(),
+                    attributes: {
+                        homeDirectory: path.join('/app/data', app.id, 'data'),
+                        objectclass: ['user'],
+                        objectcategory: 'person',
+                        cn: user.id,
+                        uid: `${username}@${appFqdn}`,  // for bind after search
+                        uidNumber: uidNumber,           // unix uid for ftp access
+                        gidNumber: uidNumber            // unix gid for ftp access
+                    }
+                };
 
-            finalSend([ obj ], req, res, next);
+                finalSend([ obj ], req, res, next);
+            });
         });
     });
 }
