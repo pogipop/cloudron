@@ -87,6 +87,7 @@ function setProgress(task, message, callback) {
     callback();
 }
 
+// some conf that can be setup during provision time since the post-activation API requires user tokens
 function autoprovision(autoconf, callback) {
     assert.strictEqual(typeof autoconf, 'object');
     assert.strictEqual(typeof callback, 'function');
