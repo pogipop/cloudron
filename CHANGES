@@ -1609,3 +1609,7 @@
 * Customizable app icons
 * Remove obsolete X-Frame-Options from nginx configs
 * Give SFTP access based on access restriction
+
+[4.1.1]
+* Add UI hint about SFTP access restriction
+
