@@ -87,29 +87,6 @@ function setProgress(task, message, callback) {
     callback();
 }
 
-// some conf that can be setup during provision time since the post-activation API requires user tokens
-function autoprovision(autoconf, callback) {
-    assert.strictEqual(typeof autoconf, 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    async.eachSeries(Object.keys(autoconf), function (key, iteratorDone) {
-        debug(`autoprovision: ${key}`);
-
-        switch (key) {
-        case 'backupConfig':
-            settings.setBackupConfig(autoconf[key], iteratorDone);
-            break;
-        default:
-            debug(`autoprovision: ${key} ignored`);
-            return iteratorDone();
-        }
-    }, function (error) {
-        if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
-
-        callback(null);
-    });
-}
-
 function autoRegister(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -147,9 +124,9 @@ function unprovision(callback) {
 }
 
 
-function setup(dnsConfig, autoconf, auditSource, callback) {
+function setup(dnsConfig, backupConfig, auditSource, callback) {
     assert.strictEqual(typeof dnsConfig, 'object');
-    assert.strictEqual(typeof autoconf, 'object');
+    assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -196,7 +173,7 @@ function setup(dnsConfig, autoconf, auditSource, callback) {
                     cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
                     mail.addDomain.bind(null, domain), // this relies on config.mailFqdn()
                     setProgress.bind(null, 'setup', 'Applying auto-configuration'),
-                    autoprovision.bind(null, autoconf),
+                    (next) => { if (!backupConfig) return next(); settings.setBackupConfig(backupConfig, next); },
                     setProgress.bind(null, 'setup', 'Done'),
                     eventlog.add.bind(null, eventlog.ACTION_PROVISION, auditSource, { })
                 ], function (error) {
@@ -267,11 +244,10 @@ function activate(username, password, email, displayName, ip, auditSource, callb
     });
 }
 
-function restore(backupConfig, backupId, version, autoconf, auditSource, callback) {
+function restore(backupConfig, backupId, version, auditSource, callback) {
     assert.strictEqual(typeof backupConfig, 'object');
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof version, 'string');
-    assert.strictEqual(typeof autoconf, 'object');
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
@@ -305,7 +281,6 @@ function restore(backupConfig, backupId, version, autoconf, auditSource, callbac
                 setProgress.bind(null, 'restore', 'Downloading backup'),
                 backups.restore.bind(null, backupConfig, backupId, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
                 setProgress.bind(null, 'restore', 'Applying auto-configuration'),
-                autoprovision.bind(null, autoconf),
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
                 // Once we have a 100% IP based restore, we can skip this
