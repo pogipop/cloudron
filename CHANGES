@@ -1612,4 +1612,5 @@
 
 [4.1.1]
 * Add UI hint about SFTP access restriction
+* Accept incoming mail from a private relay
 
