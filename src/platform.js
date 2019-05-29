@@ -119,10 +119,13 @@ function pruneInfraImages(callback) {
             if (!line) continue;
             let parts = line.split(' '); // [ ID, Repo:Tag@Digest ]
             if (image.tag === parts[1]) continue; // keep
-            debug(`pruneInfraImages: removing unused image of ${image.repo}: ${line}`);
+            debug(`pruneInfraImages: removing unused image of ${image.repo}: tag: ${parts[1]} id: ${parts[0]}`);
 
-            shell.exec('pruneInfraImages', `docker rmi ${parts[0]}`, iteratorCallback);
+            let result = safe.child_process.execSync(`docker rmi ${parts[0]}`, { encoding: 'utf8' });
+            if (result === null) debug(`Erroring removing image ${parts[0]}: ${safe.error.mesage}`);
         }
+
+        iteratorCallback();
     }, callback);
 }
 
