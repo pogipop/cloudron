@@ -3,7 +3,7 @@
 Dear Cloudron Admin,
 
 <% for (var i = 0; i < apps.length; i++) { -%>
-A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i].app.manifest.title %>' installed at <%= apps[i].app.fqdn %> is available!
+A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i].app.manifest.title %>' installed at <%= apps[i].app.fqdn %> is available.
 
 Changes:
 <%= apps[i].updateInfo.manifest.changelog %>
@@ -31,7 +31,7 @@ Sent at: <%= new Date().toUTCString() %>
     <div style="width: 650px; text-align: left;">
 <% for (var i = 0; i < apps.length; i++) { -%>
         <p>
-            A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i].app.manifest.title %>' installed at <a href="https://<%= apps[i].app.fqdn %>"><%= apps[i].app.fqdn %></a> is available!
+            A new version <%= apps[i].updateInfo.manifest.version %> of the app '<%= apps[i].app.manifest.title %>' installed at <a href="https://<%= apps[i].app.fqdn %>"><%= apps[i].app.fqdn %></a> is available.
         </p>
 
         <h5>Changelog:</h5>
