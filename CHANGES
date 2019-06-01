@@ -1617,4 +1617,5 @@
 * Accept incoming mail from a private relay
 * Fix issue where unused addon images were not pruned
 * Add UI for redirect from multiple domains
+* Allow apps to be relocated to custom data directory
 
