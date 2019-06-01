@@ -19,6 +19,7 @@ function startSftp(existingInfra, callback) {
     if (existingInfra.version === infra.version && infra.images.graphite.tag === existingInfra.images.graphite.tag) return callback();
 
     const cmd = `docker run --restart=always -d --name="sftp" \
+                --hostname sftp \
                 --net cloudron \
                 --net-alias sftp \
                 --log-driver syslog \

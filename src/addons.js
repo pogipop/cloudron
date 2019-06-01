@@ -992,6 +992,7 @@ function startMysql(existingInfra, callback) {
         if (error) return callback(error);
 
         const cmd = `docker run --restart=always -d --name="mysql" \
+                    --hostname mysql \
                     --net cloudron \
                     --net-alias mysql \
                     --log-driver syslog \
@@ -1204,6 +1205,7 @@ function startPostgresql(existingInfra, callback) {
         if (error) return callback(error);
 
         const cmd = `docker run --restart=always -d --name="postgresql" \
+                    --hostname postgresql \
                     --net cloudron \
                     --net-alias postgresql \
                     --log-driver syslog \
@@ -1378,6 +1380,7 @@ function startMongodb(existingInfra, callback) {
         if (error) return callback(error);
 
         const cmd = `docker run --restart=always -d --name="mongodb" \
+                    --hostname mongodb \
                     --net cloudron \
                     --net-alias mongodb \
                     --log-driver syslog \
@@ -1572,6 +1575,7 @@ function setupRedis(app, options, callback) {
             const label = app.fqdn;
             // note that we do not add appId label because this interferes with the stop/start app logic
             const cmd = `docker run --restart=always -d --name=${redisName} \
+                        --hostname ${redisName} \
                         --label=location=${label} \
                         --net cloudron \
                         --net-alias ${redisName} \

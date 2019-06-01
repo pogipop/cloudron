@@ -235,7 +235,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
         // Note that Hostname has no effect on DNS. We have to use the --net-alias for dns.
         // Hostname cannot be set with container NetworkMode
         var containerOptions = {
-            name: name, // used for filtering logs
+            name: name, // for referencing containers
             Tty: isAppContainer,
             Hostname: app.id, // set to something 'constant' so app containers can use this to communicate (across app updates)
             Image: app.manifest.dockerImage,
@@ -273,7 +273,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 },
                 CpuShares: 512, // relative to 1024 for system processes
                 VolumesFrom: isAppContainer ? null : [ app.containerId + ':rw' ],
-                NetworkMode: 'cloudron',
+                NetworkMode: 'cloudron', // user defined bridge network
                 Dns: ['172.18.0.1'], // use internal dns
                 DnsSearch: ['.'], // use internal dns
                 SecurityOpt: [ 'apparmor=docker-cloudron-app' ]

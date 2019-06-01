@@ -19,6 +19,7 @@ function startGraphite(existingInfra, callback) {
     if (existingInfra.version === infra.version && infra.images.graphite.tag === existingInfra.images.graphite.tag) return callback();
 
     const cmd = `docker run --restart=always -d --name="graphite" \
+                --hostname graphite \
                 --net cloudron \
                 --net-alias graphite \
                 --log-driver syslog \
