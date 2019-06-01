@@ -185,6 +185,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
     var stdEnv = [
         'CLOUDRON=1',
         'CLOUDRON_PROXY_IP=172.18.0.1',
+        `CLOUDRON_APP_HOSTNAME=${name}`,
         'WEBADMIN_ORIGIN=' + config.adminOrigin(),
         'API_ORIGIN=' + config.adminOrigin(),
         'APP_ORIGIN=https://' + domain,
@@ -237,7 +238,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
         var containerOptions = {
             name: name, // for referencing containers
             Tty: isAppContainer,
-            Hostname: app.id, // set to something 'constant' so app containers can use this to communicate (across app updates)
+            Hostname: name,
             Image: app.manifest.dockerImage,
             Cmd: (isAppContainer && app.debugMode && app.debugMode.cmd) ? app.debugMode.cmd : cmd,
             Env: stdEnv.concat(addonEnv).concat(portEnv).concat(appEnv),
@@ -277,6 +278,13 @@ function createSubcontainer(app, name, cmd, options, callback) {
                 Dns: ['172.18.0.1'], // use internal dns
                 DnsSearch: ['.'], // use internal dns
                 SecurityOpt: [ 'apparmor=docker-cloudron-app' ]
+            },
+            NetworkingConfig: {
+                EndpointsConfig: {
+                    cloudron: {
+                        Aliases: [ name ] // this allows sub-containers reach app containers by name
+                    }
+                }
             }
         };
 
