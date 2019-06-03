@@ -1210,6 +1210,8 @@ function stop(appId, callback) {
 function checkManifestConstraints(manifest) {
     assert(manifest && typeof manifest === 'object');
 
+    if (manifest.manifestVersion > 2) return new AppsError(AppsError.BAD_FIELD, 'Manifest version must be <= 2'); 
+
     if (!manifest.dockerImage) return new AppsError(AppsError.BAD_FIELD, 'Missing dockerImage'); // dockerImage is optional in manifest
 
     if (semver.valid(manifest.maxBoxVersion) && semver.gt(config.version(), manifest.maxBoxVersion)) {
