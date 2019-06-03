@@ -1618,4 +1618,5 @@
 * Fix issue where unused addon images were not pruned
 * Add UI for redirect from multiple domains
 * Allow apps to be relocated to custom data directory
+* Make all cloudron env vars have CLOUDRON_ prefix
 

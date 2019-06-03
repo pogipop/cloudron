@@ -795,10 +795,12 @@ function setupOauth(app, options, callback) {
         clients.add(appId, clients.TYPE_OAUTH, redirectURI, scope, function (error, result) {
             if (error) return callback(error);
 
+            const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
             var env = [
-                { name: 'OAUTH_CLIENT_ID', value: result.id },
-                { name: 'OAUTH_CLIENT_SECRET', value: result.clientSecret },
-                { name: 'OAUTH_ORIGIN', value: config.adminOrigin() }
+                { name: `${envPrefix}OAUTH_CLIENT_ID`, value: result.id },
+                { name: `${envPrefix}OAUTH_CLIENT_SECRET`, value: result.clientSecret },
+                { name: `${envPrefix}OAUTH_ORIGIN`, value: config.adminOrigin() }
             ];
 
             debugApp(app, 'Setting oauth addon config to %j', env);
@@ -832,17 +834,19 @@ function setupEmail(app, options, callback) {
 
         const mailInDomains = mailDomains.filter(function (d) { return d.enabled; }).map(function (d) { return d.domain; }).join(',');
 
+        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
         // note that "external" access info can be derived from MAIL_DOMAIN (since it's part of user documentation)
         var env = [
-            { name: 'MAIL_SMTP_SERVER', value: 'mail' },
-            { name: 'MAIL_SMTP_PORT', value: '2525' },
-            { name: 'MAIL_IMAP_SERVER', value: 'mail' },
-            { name: 'MAIL_IMAP_PORT', value: '9993' },
-            { name: 'MAIL_SIEVE_SERVER', value: 'mail' },
-            { name: 'MAIL_SIEVE_PORT', value: '4190' },
-            { name: 'MAIL_DOMAIN', value: app.domain },
-            { name: 'MAIL_DOMAINS', value: mailInDomains },
-            { name: 'LDAP_MAILBOXES_BASE_DN', value: 'ou=mailboxes,dc=cloudron' }
+            { name: `${envPrefix}MAIL_SMTP_SERVER`, value: 'mail' },
+            { name: `${envPrefix}MAIL_SMTP_PORT`, value: '2525' },
+            { name: `${envPrefix}MAIL_IMAP_SERVER`, value: 'mail' },
+            { name: `${envPrefix}MAIL_IMAP_PORT`, value: '9993' },
+            { name: `${envPrefix}MAIL_SIEVE_SERVER`, value: 'mail' },
+            { name: `${envPrefix}MAIL_SIEVE_PORT`, value: '4190' },
+            { name: `${envPrefix}MAIL_DOMAIN`, value: app.domain },
+            { name: `${envPrefix}MAIL_DOMAINS`, value: mailInDomains },
+            { name: `${envPrefix}LDAP_MAILBOXES_BASE_DN`, value: 'ou=mailboxes,dc=cloudron' }
         ];
 
         debugApp(app, 'Setting up Email');
@@ -868,14 +872,16 @@ function setupLdap(app, options, callback) {
 
     if (!app.sso) return callback(null);
 
+    const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
     var env = [
-        { name: 'LDAP_SERVER', value: '172.18.0.1' },
-        { name: 'LDAP_PORT', value: '' + config.get('ldapPort') },
-        { name: 'LDAP_URL', value: 'ldap://172.18.0.1:' + config.get('ldapPort') },
-        { name: 'LDAP_USERS_BASE_DN', value: 'ou=users,dc=cloudron' },
-        { name: 'LDAP_GROUPS_BASE_DN', value: 'ou=groups,dc=cloudron' },
-        { name: 'LDAP_BIND_DN', value: 'cn='+ app.id + ',ou=apps,dc=cloudron' },
-        { name: 'LDAP_BIND_PASSWORD', value: hat(4 * 128) } // this is ignored
+        { name: `${envPrefix}LDAP_SERVER`, value: '172.18.0.1' },
+        { name: `${envPrefix}LDAP_PORT`, value: '' + config.get('ldapPort') },
+        { name: `${envPrefix}LDAP_URL`, value: 'ldap://172.18.0.1:' + config.get('ldapPort') },
+        { name: `${envPrefix}LDAP_USERS_BASE_DN`, value: 'ou=users,dc=cloudron' },
+        { name: `${envPrefix}LDAP_GROUPS_BASE_DN`, value: 'ou=groups,dc=cloudron' },
+        { name: `${envPrefix}LDAP_BIND_DN`, value: 'cn='+ app.id + ',ou=apps,dc=cloudron' },
+        { name: `${envPrefix}LDAP_BIND_PASSWORD`, value: hat(4 * 128) } // this is ignored
     ];
 
     debugApp(app, 'Setting up LDAP');
@@ -905,14 +911,16 @@ function setupSendMail(app, options, callback) {
 
         var password = error ? hat(4 * 48) : existingPassword; // see box#565 for password length
 
+        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
         var env = [
-            { name: 'MAIL_SMTP_SERVER', value: 'mail' },
-            { name: 'MAIL_SMTP_PORT', value: '2525' },
-            { name: 'MAIL_SMTPS_PORT', value: '2465' },
-            { name: 'MAIL_SMTP_USERNAME', value: app.mailboxName + '@' + app.domain },
-            { name: 'MAIL_SMTP_PASSWORD', value: password },
-            { name: 'MAIL_FROM', value: app.mailboxName + '@' + app.domain },
-            { name: 'MAIL_DOMAIN', value: app.domain }
+            { name: `${envPrefix}MAIL_SMTP_SERVER`, value: 'mail' },
+            { name: `${envPrefix}MAIL_SMTP_PORT`, value: '2525' },
+            { name: `${envPrefix}MAIL_SMTPS_PORT`, value: '2465' },
+            { name: `${envPrefix}MAIL_SMTP_USERNAME`, value: app.mailboxName + '@' + app.domain },
+            { name: `${envPrefix}MAIL_SMTP_PASSWORD`, value: password },
+            { name: `${envPrefix}MAIL_FROM`, value: app.mailboxName + '@' + app.domain },
+            { name: `${envPrefix}MAIL_DOMAIN`, value: app.domain }
         ];
         debugApp(app, 'Setting sendmail addon config to %j', env);
         appdb.setAddonConfig(app.id, 'sendmail', env, callback);
@@ -941,13 +949,15 @@ function setupRecvMail(app, options, callback) {
 
         var password = error ? hat(4 * 48) : existingPassword;  // see box#565 for password length
 
+        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
         var env = [
-            { name: 'MAIL_IMAP_SERVER', value: 'mail' },
-            { name: 'MAIL_IMAP_PORT', value: '9993' },
-            { name: 'MAIL_IMAP_USERNAME', value: app.mailboxName + '@' + app.domain },
-            { name: 'MAIL_IMAP_PASSWORD', value: password },
-            { name: 'MAIL_TO', value: app.mailboxName + '@' + app.domain },
-            { name: 'MAIL_DOMAIN', value: app.domain }
+            { name: `${envPrefix}MAIL_IMAP_SERVER`, value: 'mail' },
+            { name: `${envPrefix}MAIL_IMAP_PORT`, value: '9993' },
+            { name: `${envPrefix}MAIL_IMAP_USERNAME`, value: app.mailboxName + '@' + app.domain },
+            { name: `${envPrefix}MAIL_IMAP_PASSWORD`, value: password },
+            { name: `${envPrefix}MAIL_TO`, value: app.mailboxName + '@' + app.domain },
+            { name: `${envPrefix}MAIL_DOMAIN`, value: app.domain }
         ];
 
         debugApp(app, 'Setting sendmail addon config to %j', env);
@@ -1049,11 +1059,13 @@ function setupMySql(app, options, callback) {
                 if (error) return callback(new Error('Error setting up mysql: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mysql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
+                const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
                 var env = [
-                    { name: 'MYSQL_USERNAME', value: data.username },
-                    { name: 'MYSQL_PASSWORD', value: data.password },
-                    { name: 'MYSQL_HOST', value: 'mysql' },
-                    { name: 'MYSQL_PORT', value: '3306' }
+                    { name: `${envPrefix}MYSQL_USERNAME`, value: data.username },
+                    { name: `${envPrefix}MYSQL_PASSWORD`, value: data.password },
+                    { name: `${envPrefix}MYSQL_HOST`, value: 'mysql' },
+                    { name: `${envPrefix}MYSQL_PORT`, value: '3306' }
                 ];
 
                 if (options.multipleDatabases) {
@@ -1260,13 +1272,15 @@ function setupPostgreSql(app, options, callback) {
                 if (error) return callback(new Error('Error setting up postgresql: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up postgresql. Status code: ${response.statusCode} message: ${response.body.message}`));
 
+                const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
                 var env = [
-                    { name: 'POSTGRESQL_URL', value: `postgres://${data.username}:${data.password}@postgresql/${data.database}` },
-                    { name: 'POSTGRESQL_USERNAME', value: data.username },
-                    { name: 'POSTGRESQL_PASSWORD', value: data.password },
-                    { name: 'POSTGRESQL_HOST', value: 'postgresql' },
-                    { name: 'POSTGRESQL_PORT', value: '5432' },
-                    { name: 'POSTGRESQL_DATABASE', value: data.database }
+                    { name: `${envPrefix}POSTGRESQL_URL`, value: `postgres://${data.username}:${data.password}@postgresql/${data.database}` },
+                    { name: `${envPrefix}POSTGRESQL_USERNAME`, value: data.username },
+                    { name: `${envPrefix}POSTGRESQL_PASSWORD`, value: data.password },
+                    { name: `${envPrefix}POSTGRESQL_HOST`, value: 'postgresql' },
+                    { name: `${envPrefix}POSTGRESQL_PORT`, value: '5432' },
+                    { name: `${envPrefix}POSTGRESQL_DATABASE`, value: data.database }
                 ];
 
                 debugApp(app, 'Setting postgresql addon config to %j', env);
@@ -1433,13 +1447,15 @@ function setupMongoDb(app, options, callback) {
                 if (error) return callback(new Error('Error setting up mongodb: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mongodb. Status code: ${response.statusCode}`));
 
+                const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
                 var env = [
-                    { name: 'MONGODB_URL', value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
-                    { name: 'MONGODB_USERNAME', value : data.username },
-                    { name: 'MONGODB_PASSWORD', value: data.password },
-                    { name: 'MONGODB_HOST', value : 'mongodb' },
-                    { name: 'MONGODB_PORT', value : '27017' },
-                    { name: 'MONGODB_DATABASE', value : data.database }
+                    { name: `${envPrefix}MONGODB_URL`, value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
+                    { name: `${envPrefix}MONGODB_USERNAME`, value : data.username },
+                    { name: `${envPrefix}MONGODB_PASSWORD`, value: data.password },
+                    { name: `${envPrefix}MONGODB_HOST`, value : 'mongodb' },
+                    { name: `${envPrefix}MONGODB_PORT`, value : '27017' },
+                    { name: `${envPrefix}MONGODB_DATABASE`, value : data.database }
                 ];
 
                 debugApp(app, 'Setting mongodb addon config to %j', env);
@@ -1593,11 +1609,13 @@ function setupRedis(app, options, callback) {
                         --label isCloudronManaged=true \
                         --read-only -v /tmp -v /run ${tag}`;
 
+            const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
             var env = [
-                { name: 'REDIS_URL', value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
-                { name: 'REDIS_PASSWORD', value: redisPassword },
-                { name: 'REDIS_HOST', value: redisName },
-                { name: 'REDIS_PORT', value: '6379' }
+                { name: `${envPrefix}REDIS_URL`, value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
+                { name: `${envPrefix}REDIS_PASSWORD`, value: redisPassword },
+                { name: `${envPrefix}REDIS_HOST`, value: redisName },
+                { name: `${envPrefix}REDIS_PORT`, value: '6379' }
             ];
 
             async.series([
