@@ -321,11 +321,12 @@ function validateDataDir(dataDir) {
     return null;
 }
 
-function getDuplicateErrorDetails(error, location, domainObject, portBindings) {
+function getDuplicateErrorDetails(error, location, domainObject, portBindings, alternateDomains) {
     assert.strictEqual(error.reason, DatabaseError.ALREADY_EXISTS);
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domainObject, 'object');
     assert.strictEqual(typeof portBindings, 'object');
+    assert(Array.isArray(alternateDomains));
 
     var match = error.message.match(/ER_DUP_ENTRY: Duplicate entry '(.*)' for key '(.*)'/);
     if (!match) {
@@ -333,10 +334,17 @@ function getDuplicateErrorDetails(error, location, domainObject, portBindings) {
         return new AppsError(AppsError.INTERNAL_ERROR, error);
     }
 
-    // check if the location conflicts
+    // check if the location or alternateDomains conflicts
     if (match[2] === 'subdomain') {
-        const fqdn = domains.fqdn(location, domainObject);
-        return new AppsError(AppsError.ALREADY_EXISTS, `subdomain '${fqdn}' is in use`);
+        // mysql reports a unique conflict with a dash: eg. domain:example.com subdomain:test => test-example.com
+        if (match[1] === `${location}-${domainObject.domain}`) return new AppsError(AppsError.ALREADY_EXISTS, `Domain '${domains.fqdn(location, domainObject)}' is in use`);
+
+        // check alternateDomains
+        let tmp = alternateDomains.filter(function (d) {
+            return match[1] === `${d.subdomain}-${d.domain}`;
+        });
+
+        if (tmp.length > 0) return new AppsError(AppsError.ALREADY_EXISTS, `Alternate domain '${tmp[0].subdomain}.${tmp[0].domain}' is in use`);
     }
 
     // check if any of the port bindings conflict
@@ -672,7 +680,7 @@ function install(data, user, auditSource, callback) {
             };
 
             appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings, data.alternateDomains));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -832,7 +840,7 @@ function configure(appId, data, user, auditSource, callback) {
             debug(`configure: id:${appId}`);
 
             appdb.setInstallationCommand(appId, appdb.ISTATE_PENDING_CONFIGURE, values, function (error) {
-                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
+                if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings, data.alternateDomains));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.BAD_STATE));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -1121,7 +1129,7 @@ function clone(appId, data, user, auditSource, callback) {
                 };
 
                 appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
-                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings));
+                    if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings, []));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
                     purchaseApp({ appId: newAppId, appstoreId: app.appStoreId, manifestId: manifest.id }, function (error) {
@@ -1210,7 +1218,7 @@ function stop(appId, callback) {
 function checkManifestConstraints(manifest) {
     assert(manifest && typeof manifest === 'object');
 
-    if (manifest.manifestVersion > 2) return new AppsError(AppsError.BAD_FIELD, 'Manifest version must be <= 2'); 
+    if (manifest.manifestVersion > 2) return new AppsError(AppsError.BAD_FIELD, 'Manifest version must be <= 2');
 
     if (!manifest.dockerImage) return new AppsError(AppsError.BAD_FIELD, 'Missing dockerImage'); // dockerImage is optional in manifest
 
