@@ -797,6 +797,9 @@ function ensureDkimKeySync(domain) {
 
     if (!safe.fs.writeFileSync(dkimSelectorFile, constants.DKIM_SELECTOR, 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
 
+    // if the 'yellowtent' user of OS and the 'cloudron' user of mail container don't match, the keys become inaccessible by mail code
+    if (!safe.fs.chmodSync(dkimPrivateKeyFile, 0o644)) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+
     return null;
 }
 
