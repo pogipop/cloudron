@@ -12,8 +12,18 @@ exports = module.exports = {
 var appstore = require('../appstore.js'),
     AppstoreError = appstore.AppstoreError,
     assert = require('assert'),
+    custom = require('../custom.js'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess;
+
+function isAppAllowed(appstoreId) {
+    if (custom.spec().appstore.blacklist.includes(appstoreId)) return false;
+
+    if (!custom.spec().appstore.whitelist) return true;
+    if (!custom.spec().appstore.whitelist[appstoreId]) return false;
+
+    return true;
+}
 
 function getApps(req, res, next) {
     appstore.getApps(function (error, apps) {
@@ -22,12 +32,17 @@ function getApps(req, res, next) {
         if (error && error.reason === AppstoreError.NOT_REGISTERED) return next(new HttpError(412, error.message));
         if (error) return next(new HttpError(500, error));
 
-        next(new HttpSuccess(200, { apps: apps }));
+        let filteredApps = apps.filter((app) => !custom.spec().appstore.blacklist.includes(app.id));
+        if (custom.spec().appstore.whitelist) filteredApps = filteredApps.filter((app) => app.id in custom.spec().appstore.whitelist);
+
+        next(new HttpSuccess(200, { apps: filteredApps }));
     });
 }
 
 function getApp(req, res, next) {
     assert.strictEqual(typeof req.params.appstoreId, 'string');
+
+    if (!isAppAllowed(req.params.appstoreId)) return next(new HttpError(405, 'feature disabled by admin'));
 
     appstore.getApp(req.params.appstoreId, function (error, app) {
         if (error && error.reason === AppstoreError.NOT_FOUND) return next(new HttpError(404, 'No such app'));
@@ -43,6 +58,8 @@ function getApp(req, res, next) {
 function getAppVersion(req, res, next) {
     assert.strictEqual(typeof req.params.appstoreId, 'string');
     assert.strictEqual(typeof req.params.versionId, 'string');
+
+    if (!isAppAllowed(req.params.appstoreId)) return next(new HttpError(405, 'feature disabled by admin'));
 
     appstore.getAppVersion(req.params.appstoreId, req.params.versionId, function (error, manifest) {
         if (error && error.reason === AppstoreError.NOT_FOUND) return next(new HttpError(404, 'No such app or version'));

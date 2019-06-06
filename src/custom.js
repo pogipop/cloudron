@@ -13,6 +13,10 @@ exports = module.exports = {
 };
 
 const DEFAULT_SPEC = {
+    appstore: {
+        blacklist: [],
+        whitelist: null // null imples, not set. this is an object and not an array
+    },
     backups: {
         configurable: true
     },

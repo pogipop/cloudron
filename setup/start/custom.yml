@@ -1,6 +1,15 @@
 # add customizations here
 # after making changes run "sudo systemctl restart box"
 
+# appstore:
+#   blacklist:
+#     - io.wekan.cloudronapp
+#     - io.cloudron.openvpn
+#   whitelist:
+#     org.wordpress.cloudronapp: {}
+#     chat.rocket.cloudronapp: {}
+#     com.nextcloud.cloudronapp: {}
+#
 # backups:
 #   configurable: true
 #
