@@ -48,6 +48,7 @@ apt-get -y install \
     resolvconf \
     sudo \
     swaks \
+    tzdata \
     unattended-upgrades \
     unbound \
     xfsprogs
