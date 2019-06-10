@@ -17,6 +17,8 @@ var addons = require('../addons.js'),
     HttpSuccess = require('connect-lastmile').HttpSuccess;
 
 function getAll(req, res, next) {
+    req.clearTimeout(); // can take a while to get status of all services
+
     addons.getServices(function (error, result) {
         if (error) return next(new HttpError(500, error));
 
