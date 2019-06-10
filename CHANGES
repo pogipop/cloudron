@@ -1621,4 +1621,5 @@
 * Make all cloudron env vars have CLOUDRON_ prefix
 * Update manifest version to 2
 * Fix issue where DKIM keys were inaccessible
+* Fix DKIM selector conflict when adding same domain across multiple cloudrons
 

@@ -174,6 +174,8 @@ CREATE TABLE IF NOT EXISTS mail(
     catchAllJson TEXT,
     relayJson TEXT,
 
+    dkimSelector VARCHAR(128) NOT NULL DEFAULT "cloudron",
+
     FOREIGN KEY(domain) REFERENCES domains(domain),
     PRIMARY KEY(domain))
 

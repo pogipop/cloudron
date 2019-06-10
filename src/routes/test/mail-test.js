@@ -239,7 +239,7 @@ describe('Mail API', function () {
                 callback(null, dnsAnswerQueue[hostname][type]);
             };
 
-            dkimDomain = 'cloudron._domainkey.' + DOMAIN_0.domain;
+            dkimDomain = 'admincom-cloudron._domainkey.' + DOMAIN_0.domain;
             spfDomain = DOMAIN_0.domain;
             mxDomain = DOMAIN_0.domain;
             dmarcDomain = '_dmarc.' + DOMAIN_0.domain;

@@ -19,7 +19,7 @@ var assert = require('assert'),
     DatabaseError = require('./databaseerror.js'),
     safe = require('safetydance');
 
-var MAILDB_FIELDS = [ 'domain', 'enabled', 'mailFromValidation', 'catchAllJson', 'relayJson' ].join(',');
+var MAILDB_FIELDS = [ 'domain', 'enabled', 'mailFromValidation', 'catchAllJson', 'relayJson', 'dkimSelector' ].join(',');
 
 function postProcess(data) {
     data.enabled = !!data.enabled; // int to boolean
@@ -34,10 +34,12 @@ function postProcess(data) {
     return data;
 }
 
-function add(domain, callback) {
+function add(domain, data, callback) {
     assert.strictEqual(typeof domain, 'string');
+    assert.strictEqual(typeof data, 'object');
+    assert.strictEqual(typeof callback, 'function');
 
-    database.query('INSERT INTO mail (domain) VALUES (?)', [ domain ], function (error) {
+    database.query('INSERT INTO mail (domain, dkimSelector) VALUES (?, ?)', [ domain, data.dkimSelector || 'cloudron' ], function (error) {
         if (error && error.code === 'ER_DUP_ENTRY') return callback(new DatabaseError(DatabaseError.ALREADY_EXISTS, 'mail domain already exists'));
         if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND), 'no such domain');
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));

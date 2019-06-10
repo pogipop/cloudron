@@ -171,7 +171,7 @@ function setup(dnsConfig, backupConfig, auditSource, callback) {
                     autoRegister.bind(null, domain),
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
                     cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
-                    mail.addDomain.bind(null, domain), // this relies on config.mailFqdn()
+                    mail.addDomain.bind(null, domain), // this relies on config.mailFqdn() and config.adminDomain()
                     setProgress.bind(null, 'setup', 'Applying auto-configuration'),
                     (next) => { if (!backupConfig) return next(); settings.setBackupConfig(backupConfig, next); },
                     setProgress.bind(null, 'setup', 'Done'),

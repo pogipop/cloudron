@@ -100,7 +100,7 @@ function setup(done) {
         database._clear.bind(null),
         ldapServer.start.bind(null),
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
-        maildb.add.bind(null, DOMAIN_0.domain),
+        maildb.add.bind(null, DOMAIN_0.domain, {}),
         function (callback) {
             users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);

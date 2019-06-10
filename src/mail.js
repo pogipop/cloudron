@@ -210,10 +210,14 @@ function verifyRelay(relay, callback) {
     });
 }
 
-function checkDkim(domain, callback) {
-    var dkim = {
-        domain: `${constants.DKIM_SELECTOR}._domainkey.${domain}`,
-        name: `${constants.DKIM_SELECTOR}._domainkey`,
+function checkDkim(mailDomain, callback) {
+    assert.strictEqual(typeof mailDomain, 'object');
+    assert.strictEqual(typeof callback, 'function');
+
+    const domain = mailDomain.domain;
+    let dkim = {
+        domain: `${mailDomain.dkimSelector}._domainkey.${domain}`,
+        name: `${mailDomain.dkimSelector}._domainkey`,
         type: 'TXT',
         expected: null,
         value: null,
@@ -495,28 +499,28 @@ function getStatus(domain, callback) {
 
     const mailFqdn = config.mailFqdn();
 
-    getDomain(domain, function (error, result) {
+    getDomain(domain, function (error, mailDomain) {
         if (error) return callback(error);
 
         let checks = [];
-        if (result.enabled) {
+        if (mailDomain.enabled) {
             checks.push(
                 recordResult('dns.mx', checkMx.bind(null, domain, mailFqdn)),
                 recordResult('dns.dmarc', checkDmarc.bind(null, domain))
             );
         }
 
-        if (result.relay.provider === 'cloudron-smtp') {
+        if (mailDomain.relay.provider === 'cloudron-smtp') {
             // these tests currently only make sense when using Cloudron's SMTP server at this point
             checks.push(
                 recordResult('dns.spf', checkSpf.bind(null, domain, mailFqdn)),
-                recordResult('dns.dkim', checkDkim.bind(null, domain)),
+                recordResult('dns.dkim', checkDkim.bind(null, mailDomain)),
                 recordResult('dns.ptr', checkPtr.bind(null, mailFqdn)),
                 recordResult('relay', checkOutboundPort25),
                 recordResult('rbl', checkRblStatus.bind(null, domain))
             );
-        } else if (result.relay.provider !== 'noop') {
-            checks.push(recordResult('relay', checkSmtpRelay.bind(null, result.relay)));
+        } else if (mailDomain.relay.provider !== 'noop') {
+            checks.push(recordResult('relay', checkSmtpRelay.bind(null, mailDomain.relay)));
         }
 
         async.parallel(checks, function () {
@@ -770,9 +774,10 @@ function txtRecordsWithSpf(domain, mailFqdn, callback) {
     });
 }
 
-function ensureDkimKeySync(domain) {
-    assert.strictEqual(typeof domain, 'string');
+function ensureDkimKeySync(mailDomain) {
+    assert.strictEqual(typeof mailDomain, 'object');
 
+    const domain = mailDomain.domain;
     const dkimPath = path.join(paths.MAIL_DATA_DIR, `dkim/${domain}`);
     const dkimPrivateKeyFile = path.join(dkimPath, 'private');
     const dkimPublicKeyFile = path.join(dkimPath, 'public');
@@ -795,7 +800,7 @@ function ensureDkimKeySync(domain) {
     if (!safe.child_process.execSync('openssl genrsa -out ' + dkimPrivateKeyFile + ' 1024')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
     if (!safe.child_process.execSync('openssl rsa -in ' + dkimPrivateKeyFile + ' -out ' + dkimPublicKeyFile + ' -pubout -outform PEM')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
 
-    if (!safe.fs.writeFileSync(dkimSelectorFile, constants.DKIM_SELECTOR, 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
+    if (!safe.fs.writeFileSync(dkimSelectorFile, mailDomain.dkimSelector, 'utf8')) return new MailError(MailError.INTERNAL_ERROR, safe.error);
 
     // if the 'yellowtent' user of OS and the 'cloudron' user of mail container don't match, the keys become inaccessible by mail code
     if (!safe.fs.chmodSync(dkimPrivateKeyFile, 0o644)) return new MailError(MailError.INTERNAL_ERROR, safe.error);
@@ -829,11 +834,11 @@ function upsertDnsRecords(domain, mailFqdn, callback) {
 
     debug(`upsertDnsRecords: updating mail dns records of domain ${domain} and mail fqdn ${mailFqdn}`);
 
-    maildb.get(domain, function (error, result) {
+    maildb.get(domain, function (error, mailDomain) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
-        error = ensureDkimKeySync(domain);
+        error = ensureDkimKeySync(mailDomain);
         if (error) return callback(error);
 
         if (process.env.BOX_ENV === 'test') return callback();
@@ -842,11 +847,11 @@ function upsertDnsRecords(domain, mailFqdn, callback) {
         if (!dkimKey) return callback(new MailError(MailError.INTERNAL_ERROR, new Error('Failed to read dkim public key')));
 
         // t=s limits the domainkey to this domain and not it's subdomains
-        var dkimRecord = { subdomain: `${constants.DKIM_SELECTOR}._domainkey`, domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
+        var dkimRecord = { subdomain: `${mailDomain.dkimSelector}._domainkey`, domain: domain, type: 'TXT', values: [ '"v=DKIM1; t=s; p=' + dkimKey + '"' ] };
 
         var records = [ ];
         records.push(dkimRecord);
-        if (result.enabled) {
+        if (mailDomain.enabled) {
             records.push({ subdomain: '_dmarc', domain: domain, type: 'TXT', values: [ '"v=DMARC1; p=reject; pct=100"' ] });
             records.push({ subdomain: '', domain: domain, type: 'MX', values: [ '10 ' + mailFqdn + '.' ] });
         }
@@ -904,7 +909,9 @@ function addDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    maildb.add(domain, function (error) {
+    const dkimSelector = domain === config.adminDomain() ? 'cloudron' : (config.adminDomain().replace(/\./g, '') + '-cloudron');
+
+    maildb.add(domain, { dkimSelector }, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'Domain already exists'));
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new MailError(MailError.NOT_FOUND, 'No such domain'));
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));

@@ -2044,7 +2044,7 @@ describe('database', function () {
         before(function (done) {
             async.series([
                 domaindb.add.bind(null, DOMAIN_0.domain, { zoneName: DOMAIN_0.zoneName, provider: DOMAIN_0.provider, config: DOMAIN_0.config, tlsConfig: DOMAIN_0.tlsConfig }),
-                maildb.add.bind(null, DOMAIN_0.domain)
+                maildb.add.bind(null, DOMAIN_0.domain, {})
             ], done);
         });
 
@@ -2206,7 +2206,8 @@ describe('database', function () {
             enabled: false,
             relay: { provider: 'cloudron-smtp' },
             catchAll: [ ],
-            mailFromValidation: true
+            mailFromValidation: true,
+            dkimSelector: 'cloudron'
         };
 
         before(function (done) {
@@ -2218,7 +2219,7 @@ describe('database', function () {
         });
 
         it('cannot add non-existing domain', function (done) {
-            maildb.add(MAIL_DOMAIN_0.domain + 'nope', function (error) {
+            maildb.add(MAIL_DOMAIN_0.domain + 'nope', {}, function (error) {
                 expect(error).to.be.ok();
                 expect(error.reason).to.be(DatabaseError.NOT_FOUND);
 
@@ -2227,7 +2228,7 @@ describe('database', function () {
         });
 
         it('can add domain', function (done) {
-            maildb.add(MAIL_DOMAIN_0.domain, function (error) {
+            maildb.add(MAIL_DOMAIN_0.domain, {}, function (error) {
                 expect(error).to.equal(null);
 
                 done();
