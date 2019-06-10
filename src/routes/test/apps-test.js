@@ -381,13 +381,13 @@ describe('App API', function () {
             });
     });
 
-    it('app install fails - reserved api location', function (done) {
+    it('app install fails - reserved smtp location', function (done) {
         superagent.post(SERVER_URL + '/api/v1/apps/install')
             .query({ access_token: token })
-            .send({ manifest: APP_MANIFEST, location: constants.API_LOCATION, accessRestriction: null, domain: DOMAIN_0.domain })
+            .send({ manifest: APP_MANIFEST, location: constants.SMTP_LOCATION, accessRestriction: null, domain: DOMAIN_0.domain })
             .end(function (err, res) {
                 expect(res.statusCode).to.equal(400);
-                expect(res.body.message).to.contain(constants.API_LOCATION + ' is reserved');
+                expect(res.body.message).to.contain(constants.SMTP_LOCATION + ' is reserved');
                 done();
             });
     });

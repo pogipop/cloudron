@@ -145,7 +145,6 @@ function validateHostname(location, domainObject) {
     const hostname = fqdn(location, domainObject);
 
     const RESERVED_LOCATIONS = [
-        constants.API_LOCATION,
         constants.SMTP_LOCATION,
         constants.IMAP_LOCATION
     ];

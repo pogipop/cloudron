@@ -1,7 +1,6 @@
 'use strict';
 
 exports = module.exports = {
-    API_LOCATION: 'api', // this is unused but reserved for future use (#403)
     SMTP_LOCATION: 'smtp',
     IMAP_LOCATION: 'imap',
 
