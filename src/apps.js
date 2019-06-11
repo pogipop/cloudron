@@ -1464,7 +1464,7 @@ function downloadFile(appId, filePath, callback) {
                     transform: function (chunk, ignoredEncoding, callback) {
                         this._buffer = this._buffer ? Buffer.concat([this._buffer, chunk]) : chunk;
 
-                        while (true) {
+                        for (;;) {
                             if (this._buffer.length < 8) break; // header is 8 bytes
 
                             var type = this._buffer.readUInt8(0);
