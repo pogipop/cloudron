@@ -1622,4 +1622,5 @@
 * Update manifest version to 2
 * Fix issue where DKIM keys were inaccessible
 * Fix DKIM selector conflict when adding same domain across multiple cloudrons
+* Fix name.com DNS backend issue for naked domains
 
