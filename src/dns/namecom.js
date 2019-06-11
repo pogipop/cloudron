@@ -131,7 +131,7 @@ function getInternal(dnsConfig, zoneName, name, type, callback) {
 
             result.body.records.forEach(function (r) {
                 // name.com api simply strips empty properties
-                r.host = r.host || '@';
+                r.host = r.host || '';
             });
 
             var results = result.body.records.filter(function (r) {
@@ -153,7 +153,7 @@ function upsert(domainObject, location, type, values, callback) {
 
     const dnsConfig = domainObject.config,
         zoneName = domainObject.zoneName,
-        name = domains.getName(domainObject, location, type) || '@';
+        name = domains.getName(domainObject, location, type) || '';
 
     debug(`upsert: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
@@ -174,7 +174,7 @@ function get(domainObject, location, type, callback) {
 
     const dnsConfig = domainObject.config,
         zoneName = domainObject.zoneName,
-        name = domains.getName(domainObject, location, type) || '@';
+        name = domains.getName(domainObject, location, type) || '';
 
     getInternal(dnsConfig, zoneName, name, type, function (error, result) {
         if (error) return callback(error);
@@ -196,7 +196,7 @@ function del(domainObject, location, type, values, callback) {
 
     const dnsConfig = domainObject.config,
         zoneName = domainObject.zoneName,
-        name = domains.getName(domainObject, location, type) || '@';
+        name = domains.getName(domainObject, location, type) || '';
 
     debug(`del: ${name} in zone ${zoneName} of type ${type} with values ${JSON.stringify(values)}`);
 
