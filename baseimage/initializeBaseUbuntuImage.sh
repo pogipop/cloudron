@@ -46,12 +46,14 @@ apt-get -y install \
     openssh-server \
     pwgen \
     resolvconf \
-    sudo \
     swaks \
     tzdata \
     unattended-upgrades \
     unbound \
     xfsprogs
+
+# on some providers like scaleway the sudo file is changed and we want to keep the old one
+apt-get -o Dpkg::Options::="--force-confold" install -y sudo
 
 # this ensures that unattended upgades are enabled, if it was disabled during ubuntu install time (see #346)
 # debconf-set-selection of unattended-upgrades/enable_auto_updates + dpkg-reconfigure does not work
