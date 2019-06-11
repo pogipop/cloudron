@@ -909,7 +909,7 @@ function addDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    const dkimSelector = domain === config.adminDomain() ? 'cloudron' : (config.adminDomain().replace(/\./g, '') + '-cloudron');
+    const dkimSelector = domain === config.adminDomain() ? 'cloudron' : ('cloudron-' + config.adminDomain().replace(/\./g, ''));
 
     maildb.add(domain, { dkimSelector }, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'Domain already exists'));
