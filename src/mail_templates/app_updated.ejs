@@ -4,10 +4,37 @@ Dear Cloudron Admin,
 
 The application '<%= title %>' installed at <%= appFqdn %> was updated to app package version <%= version %>.
 
+Changes:
+<%= changelog %>
+
 Powered by https://cloudron.io
 
 Sent at: <%= new Date().toUTCString() %>
 
 <% } else { %>
 
+    <center>
+
+        <img src="<%= cloudronAvatarUrl %>" width="128px" height="128px"/>
+
+        <h3>Dear <%= cloudronName %> Admin,</h3>
+
+        <br/>
+
+        <div style="width: 650px; text-align: left;">
+            The application '<%= title %>' installed at <%= appFqdn %> was updated to app package version <%= version %>.
+
+            <h5>Changelog:</h5>
+            <%- changelogHTML %>
+        </div>
+
+        <br/>
+        <br/>
+
+        <div style="font-size: 10px; color: #333333; background: #ffffff;">
+            Powered by <a href="https://cloudron.io">Cloudron</a>.<br/>
+            Sent at: <%= new Date().toUTCString() %>
+        </div>
+
+    </center>
 <% } %>

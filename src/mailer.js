@@ -306,11 +306,29 @@ function appUpdated(mailTo, app, callback) {
     getMailConfig(function (error, mailConfig) {
         if (error) return debug('Error getting mail details:', error);
 
+        var converter = new showdown.Converter();
+        var templateData = {
+            title: app.manifest.title,
+            appFqdn: app.fqdn,
+            version: app.manifest.version,
+            changelog: app.manifest.changelog,
+            changelogHTML: converter.makeHtml(app.manifest.changelog),
+            cloudronName: mailConfig.cloudronName,
+            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+        };
+
+        var templateDataText = JSON.parse(JSON.stringify(templateData));
+        templateDataText.format = 'text';
+
+        var templateDataHTML = JSON.parse(JSON.stringify(templateData));
+        templateDataHTML.format = 'html';
+
         var mailOptions = {
             from: mailConfig.notificationFrom,
             to: mailTo,
-            subject: util.format('[%s] App %s was updated', mailConfig.cloudronName, app.fqdn),
-            text: render('app_updated.ejs', { title: app.manifest.title, appFqdn: app.fqdn, version: app.manifest.version, format: 'text' })
+            subject: `[${mailConfig.cloudronName}] App ${app.fqdn} was updated`,
+            text: render('app_updated.ejs', templateDataText),
+            html: render('app_updated.ejs', templateDataHTML)
         };
 
         sendMail(mailOptions, callback);

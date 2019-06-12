@@ -28,6 +28,8 @@ Sent at: <%= new Date().toUTCString() %>
 
     <h3>Dear <%= cloudronName %> Admin,</h3>
 
+    <br/>
+
     <div style="width: 650px; text-align: left;">
 <% for (var i = 0; i < apps.length; i++) { -%>
         <p>
@@ -40,21 +42,20 @@ Sent at: <%= new Date().toUTCString() %>
         <br/>
 <% } -%>
 
-        <% if (!hasSubscription) { %>
+<% if (!hasSubscription) { -%>
         <p>Keep your Cloudron automatically up-to-date and secure by upgrading to a <a href="<%= webadminUrl %>/#/settings">paid plan</a>.</p>
-        <% } else { -%>
+<% } else { -%>
         <p>
             <br/>
             <center><a href="<%= webadminUrl %>">Update now</a></center>
             <br/>
         </p>
-        <% } -%>
-
-        <br/>
+<% } -%>
     </div>
 
     <div style="font-size: 10px; color: #333333; background: #ffffff;">
-        Powered by <a href="https://cloudron.io">Cloudron</a>.
+        Powered by <a href="https://cloudron.io">Cloudron</a>.<br/>
+        Sent at: <%= new Date().toUTCString() %>
     </div>
 
     </center>
