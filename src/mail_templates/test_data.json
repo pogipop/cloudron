@@ -1,58 +1,48 @@
 {
+  "app_updated.ejs": {
+    "format": "html",
+    "title": "WordPress",
+    "appFqdn": "updated.smartserver.io",
+    "version": "1.3.4",
+    "changelog": "* This has changed\n * and that as well",
+    "changelogHTML": "<ul><li>This has changed</li><li>and that as well</li></ul>",
+    "cloudronName": "Smartserver",
+    "cloudronAvatarUrl": "https://cloudron.io/img/logo.png"
+  },
+  "app_updates_available.ejs": {
     "format": "html",
     "webadminUrl": "https://my.cloudron.io",
     "cloudronName": "Smartserver",
     "cloudronAvatarUrl": "https://cloudron.io/img/logo.png",
-    "info": {
-        "pendingBoxUpdate": {
-            "version": "1.3.7",
-            "changelog": [
-                "Feature one",
-                "Feature two"
-            ]
-        },
-        "pendingAppUpdates": [{
-            "manifest": {
-                "title": "Wordpress",
-                "version": "1.2.3",
-                "changelog": "* This has changed\n * and that as well"
-            }
-        }],
-        "finishedBoxUpdates": [{
-            "boxUpdateInfo": {
-                "version": "1.0.1",
-                "changelog": [
-                    "Feature one",
-                    "Feature two"
-                ]
-            }
-        }, {
-            "boxUpdateInfo": {
-                "version": "1.0.2",
-                "changelog": [
-                    "Feature one",
-                    "Feature two",
-                    "Feature three"
-                ]
-            }
-        }],
-        "finishedAppUpdates": [{
-            "toManifest": {
-                "title": "Rocket.Chat",
-                "version": "0.2.1",
-                "changelog": "* This has changed\n * and that as well\n * some more"
-            }
-        }, {
-            "toManifest": {
-                "title": "Redmine",
-                "version": "1.2.1",
-                "changelog": "* This has changed\n * and that as well\n * some more"
-            }
-        }],
-        "certRenewals": [],
-        "finishedBackups": [],
-        "usersAdded": [],
-        "usersRemoved": [],
-        "hasSubscription": false
-    }
+    "hasSubscription": true,
+    "apps": [{
+      "updateInfo": {
+        "manifest": {
+          "version": "1.4.3"
+        }
+      },
+      "app": {
+        "fqdn": "site.smartserver.io",
+        "manifest": {
+          "title": "WordPress"
+        }
+      },
+      "changelog": "* This has changed\n * and that as well",
+      "changelogHTML": "<ul><li>This has changed</li><li>and that as well</li></ul>"
+    }, {
+      "updateInfo": {
+        "manifest": {
+          "version": "0.1.3"
+        }
+      },
+      "app": {
+        "fqdn": "another.smartserver.io",
+        "manifest": {
+          "title": "RocketChat"
+        }
+      },
+      "changelog": "* This has changed\n * and that as well",
+      "changelogHTML": "<ul><li>This has changed</li><li>and that as well</li></ul>"
+    }]
+  }
 }
