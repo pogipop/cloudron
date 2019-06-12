@@ -1623,4 +1623,5 @@
 * Fix issue where DKIM keys were inaccessible
 * Fix DKIM selector conflict when adding same domain across multiple cloudrons
 * Fix name.com DNS backend issue for naked domains
+* Add DigitalOcean Frankfurt (fra1) region for backup storage
 
