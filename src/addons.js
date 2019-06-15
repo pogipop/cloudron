@@ -1069,11 +1069,11 @@ function setupMySql(app, options, callback) {
                 ];
 
                 if (options.multipleDatabases) {
-                    env = env.concat({ name: 'MYSQL_DATABASE_PREFIX', value: `${data.prefix}_` });
+                    env = env.concat({ name: `${envPrefix}MYSQL_DATABASE_PREFIX`, value: `${data.prefix}_` });
                 } else {
                     env = env.concat(
-                        { name: 'MYSQL_URL', value: `mysql://${data.username}:${data.password}@mysql/${data.database}` },
-                        { name: 'MYSQL_DATABASE', value: data.database }
+                        { name: `${envPrefix}MYSQL_URL`, value: `mysql://${data.username}:${data.password}@mysql/${data.database}` },
+                        { name: `${envPrefix}MYSQL_DATABASE`, value: data.database }
                     );
                 }
 
