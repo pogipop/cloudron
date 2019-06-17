@@ -1625,3 +1625,9 @@
 * Fix name.com DNS backend issue for naked domains
 * Add DigitalOcean Frankfurt (fra1) region for backup storage
 
+[4.1.3]
+* Update manifest format package
+
+[4.1.4]
+* Add CLOUDRON_ prefix to MySQL addon variables
+
