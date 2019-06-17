@@ -560,13 +560,13 @@ function authenticateMailAddon(req, res, next) {
 
         if (addonId === 'recvmail' && !domain.enabled) return next(new ldap.NoSuchObjectError(req.dn.toString()));
 
-        let name;
-        if (addonId === 'sendmail') name = 'MAIL_SMTP_PASSWORD';
-        else if (addonId === 'recvmail') name = 'MAIL_IMAP_PASSWORD';
+        let namePattern; // manifest v2 has a CLOUDRON_ prefix for names
+        if (addonId === 'sendmail') namePattern = '%MAIL_SMTP_PASSWORD';
+        else if (addonId === 'recvmail') namePattern = '%MAIL_IMAP_PASSWORD';
         else return next(new ldap.OperationsError('Invalid DN'));
 
         // note: with sendmail addon, apps can send mail without a mailbox (unlike users)
-        appdb.getAppIdByAddonConfigValue(addonId, name, req.credentials || '', function (error, appId) {
+        appdb.getAppIdByAddonConfigValue(addonId, namePattern, req.credentials || '', function (error, appId) {
             if (error && error.reason !== DatabaseError.NOT_FOUND) return next(new ldap.OperationsError(error.message));
             if (appId) { // matched app password
                 eventlog.add(eventlog.ACTION_APP_LOGIN, { authType: 'ldap', mailboxId: email }, { appId: appId, addonId: addonId });
