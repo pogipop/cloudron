@@ -111,7 +111,7 @@ function upsert(domainObject, location, type, values, callback) {
                 name: name,
                 data: value,
                 priority: priority,
-                ttl: 1
+                ttl: 30 // Recent DO DNS API break means this value must atleast be 30
             };
 
             if (i >= result.length) {
