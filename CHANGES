@@ -1631,6 +1631,7 @@
 [4.1.4]
 * Add CLOUDRON_ prefix to MySQL addon variables
 
-[4.2.0]
+[4.1.5]
 * Make the terminal addon button inject variables based on manifest version
+* Preserve addon passwords correctly when using v2 manifest
 
