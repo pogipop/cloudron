@@ -906,12 +906,12 @@ function setupSendMail(app, options, callback) {
 
     debugApp(app, 'Setting up SendMail');
 
-    appdb.getAddonConfigByName(app.id, 'sendmail', 'MAIL_SMTP_PASSWORD', function (error, existingPassword) {
+    const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
+    appdb.getAddonConfigByName(app.id, 'sendmail', `${envPrefix}MAIL_SMTP_PASSWORD`, function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         var password = error ? hat(4 * 48) : existingPassword; // see box#565 for password length
-
-        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
         var env = [
             { name: `${envPrefix}MAIL_SMTP_SERVER`, value: 'mail' },
@@ -944,12 +944,12 @@ function setupRecvMail(app, options, callback) {
 
     debugApp(app, 'Setting up recvmail');
 
-    appdb.getAddonConfigByName(app.id, 'recvmail', 'MAIL_IMAP_PASSWORD', function (error, existingPassword) {
+    const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
+    appdb.getAddonConfigByName(app.id, 'recvmail', `${envPrefix}MAIL_IMAP_PASSWORD`, function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         var password = error ? hat(4 * 48) : existingPassword;  // see box#565 for password length
-
-        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
         var env = [
             { name: `${envPrefix}MAIL_IMAP_SERVER`, value: 'mail' },
@@ -1040,7 +1040,9 @@ function setupMySql(app, options, callback) {
 
     debugApp(app, 'Setting up mysql');
 
-    appdb.getAddonConfigByName(app.id, 'mysql', 'MYSQL_PASSWORD', function (error, existingPassword) {
+    const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
+    appdb.getAddonConfigByName(app.id, 'mysql', `${envPrefix}MYSQL_PASSWORD`, function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         const tmp = mysqlDatabaseName(app.id);
@@ -1058,8 +1060,6 @@ function setupMySql(app, options, callback) {
             request.post(`https://${result.ip}:3000/` + (options.multipleDatabases ? 'prefixes' : 'databases') + `?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
                 if (error) return callback(new Error('Error setting up mysql: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mysql. Status code: ${response.statusCode} message: ${response.body.message}`));
-
-                const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
                 var env = [
                     { name: `${envPrefix}MYSQL_USERNAME`, value: data.username },
@@ -1255,8 +1255,9 @@ function setupPostgreSql(app, options, callback) {
     debugApp(app, 'Setting up postgresql');
 
     const { database, username } = postgreSqlNames(app.id);
+    const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
-    appdb.getAddonConfigByName(app.id, 'postgresql', 'POSTGRESQL_PASSWORD', function (error, existingPassword) {
+    appdb.getAddonConfigByName(app.id, 'postgresql', `${envPrefix}POSTGRESQL_PASSWORD`, function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         const data = {
@@ -1271,8 +1272,6 @@ function setupPostgreSql(app, options, callback) {
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
                 if (error) return callback(new Error('Error setting up postgresql: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up postgresql. Status code: ${response.statusCode} message: ${response.body.message}`));
-
-                const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
                 var env = [
                     { name: `${envPrefix}POSTGRESQL_URL`, value: `postgres://${data.username}:${data.password}@postgresql/${data.database}` },
@@ -1431,7 +1430,9 @@ function setupMongoDb(app, options, callback) {
 
     debugApp(app, 'Setting up mongodb');
 
-    appdb.getAddonConfigByName(app.id, 'mongodb', 'MONGODB_PASSWORD', function (error, existingPassword) {
+    const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
+    appdb.getAddonConfigByName(app.id, 'mongodb', `${envPrefix}MONGODB_PASSWORD`, function (error, existingPassword) {
         if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
         const data = {
@@ -1446,8 +1447,6 @@ function setupMongoDb(app, options, callback) {
             request.post(`https://${result.ip}:3000/databases?access_token=${result.token}`, { rejectUnauthorized: false, json: data }, function (error, response) {
                 if (error) return callback(new Error('Error setting up mongodb: ' + error));
                 if (response.statusCode !== 201) return callback(new Error(`Error setting up mongodb. Status code: ${response.statusCode}`));
-
-                const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
                 var env = [
                     { name: `${envPrefix}MONGODB_URL`, value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
@@ -1570,7 +1569,9 @@ function setupRedis(app, options, callback) {
             return callback();
         }
 
-        appdb.getAddonConfigByName(app.id, 'redis', 'REDIS_PASSWORD', function (error, existingPassword) {
+        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
+
+        appdb.getAddonConfigByName(app.id, 'redis', `${envPrefix}REDIS_PASSWORD`, function (error, existingPassword) {
             if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
 
             const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
@@ -1608,8 +1609,6 @@ function setupRedis(app, options, callback) {
                         -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
                         --label isCloudronManaged=true \
                         --read-only -v /tmp -v /run ${tag}`;
-
-            const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
             var env = [
                 { name: `${envPrefix}REDIS_URL`, value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
