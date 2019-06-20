@@ -1634,4 +1634,5 @@
 [4.1.5]
 * Make the terminal addon button inject variables based on manifest version
 * Preserve addon passwords correctly when using v2 manifest
+* Show error message instead of logging out user when invalid 2FA token is provided
 
