@@ -635,13 +635,13 @@ function getAppIdByAddonConfigValue(addonId, namePattern, value, callback) {
     });
 }
 
-function getAddonConfigByName(appId, addonId, name, callback) {
+function getAddonConfigByName(appId, addonId, namePattern, callback) {
     assert.strictEqual(typeof appId, 'string');
     assert.strictEqual(typeof addonId, 'string');
-    assert.strictEqual(typeof name, 'string');
+    assert.strictEqual(typeof namePattern, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    database.query('SELECT value FROM appAddonConfigs WHERE appId = ? AND addonId = ? AND name = ?', [ appId, addonId, name ], function (error, results) {
+    database.query('SELECT value FROM appAddonConfigs WHERE appId = ? AND addonId = ? AND name LIKE ?', [ appId, addonId, namePattern ], function (error, results) {
         if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
