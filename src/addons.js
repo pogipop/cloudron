@@ -1564,68 +1564,69 @@ function setupRedis(app, options, callback) {
 
     const redisName = 'redis-' + app.id;
 
-    docker.inspect(redisName, function (error, result) {
-        if (!error) {
-            debug(`Re-using existing redis container with state: ${result.State}`);
-            return callback();
+    appdb.getAddonConfigByName(app.id, 'redis', '%REDIS_PASSWORD', function (error, existingPassword) {
+        if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
+
+        const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
+        const redisServiceToken = hat(4 * 48);
+
+        // Compute redis memory limit based on app's memory limit (this is arbitrary)
+        var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
+
+        if (memoryLimit === -1) { // unrestricted (debug mode)
+            memoryLimit = 0;
+        } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
+            memoryLimit = 150 * 1024 * 1024; // 150m
+        } else {
+            memoryLimit = 600 * 1024 * 1024; // 600m
         }
 
-        appdb.getAddonConfigByName(app.id, 'redis', '%REDIS_PASSWORD', function (error, existingPassword) {
-            if (error && error.reason !== DatabaseError.NOT_FOUND) return callback(error);
+        const tag = infra.images.redis.tag;
+        const label = app.fqdn;
+        // note that we do not add appId label because this interferes with the stop/start app logic
+        const cmd = `docker run --restart=always -d --name=${redisName} \
+                    --hostname ${redisName} \
+                    --label=location=${label} \
+                    --net cloudron \
+                    --net-alias ${redisName} \
+                    --log-driver syslog \
+                    --log-opt syslog-address=udp://127.0.0.1:2514 \
+                    --log-opt syslog-format=rfc5424 \
+                    --log-opt tag="${redisName}" \
+                    -m ${memoryLimit/2} \
+                    --memory-swap ${memoryLimit} \
+                    --dns 172.18.0.1 \
+                    --dns-search=. \
+                    -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
+                    -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
+                    -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
+                    --label isCloudronManaged=true \
+                    --read-only -v /tmp -v /run ${tag}`;
 
-            const redisPassword = error ? hat(4 * 48) : existingPassword; // see box#362 for password length
-            const redisServiceToken = hat(4 * 48);
+        const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
-            // Compute redis memory limit based on app's memory limit (this is arbitrary)
-            var memoryLimit = app.memoryLimit || app.manifest.memoryLimit || 0;
+        var env = [
+            { name: `${envPrefix}REDIS_URL`, value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
+            { name: `${envPrefix}REDIS_PASSWORD`, value: redisPassword },
+            { name: `${envPrefix}REDIS_HOST`, value: redisName },
+            { name: `${envPrefix}REDIS_PORT`, value: '6379' }
+        ];
 
-            if (memoryLimit === -1) { // unrestricted (debug mode)
-                memoryLimit = 0;
-            } else if (memoryLimit === 0 || memoryLimit <= (2 * 1024 * 1024 * 1024)) { // less than 2G (ram+swap)
-                memoryLimit = 150 * 1024 * 1024; // 150m
-            } else {
-                memoryLimit = 600 * 1024 * 1024; // 600m
-            }
-
-            const tag = infra.images.redis.tag;
-            const label = app.fqdn;
-            // note that we do not add appId label because this interferes with the stop/start app logic
-            const cmd = `docker run --restart=always -d --name=${redisName} \
-                        --hostname ${redisName} \
-                        --label=location=${label} \
-                        --net cloudron \
-                        --net-alias ${redisName} \
-                        --log-driver syslog \
-                        --log-opt syslog-address=udp://127.0.0.1:2514 \
-                        --log-opt syslog-format=rfc5424 \
-                        --log-opt tag="${redisName}" \
-                        -m ${memoryLimit/2} \
-                        --memory-swap ${memoryLimit} \
-                        --dns 172.18.0.1 \
-                        --dns-search=. \
-                        -e CLOUDRON_REDIS_PASSWORD="${redisPassword}" \
-                        -e CLOUDRON_REDIS_TOKEN="${redisServiceToken}" \
-                        -v "${paths.PLATFORM_DATA_DIR}/redis/${app.id}:/var/lib/redis" \
-                        --label isCloudronManaged=true \
-                        --read-only -v /tmp -v /run ${tag}`;
-
-            const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
-
-            var env = [
-                { name: `${envPrefix}REDIS_URL`, value: 'redis://redisuser:' + redisPassword + '@redis-' + app.id },
-                { name: `${envPrefix}REDIS_PASSWORD`, value: redisPassword },
-                { name: `${envPrefix}REDIS_HOST`, value: redisName },
-                { name: `${envPrefix}REDIS_PORT`, value: '6379' }
-            ];
-
-            async.series([
-                shell.exec.bind(null, 'startRedis', cmd),
-                appdb.setAddonConfig.bind(null, app.id, 'redis', env),
-                waitForService.bind(null, 'redis-' + app.id, 'CLOUDRON_REDIS_TOKEN')
-            ], function (error) {
-                if (error) debug('Error setting up redis: ', error);
-                callback(error);
-            });
+        async.series([
+            (next) => {
+                docker.inspect(redisName, function (inspectError, result) {
+                    if (!inspectError) {
+                        debug(`Re-using existing redis container with state: ${JSON.stringify(result.State)}`);
+                        return next();
+                    }
+                    shell.exec('startRedis', cmd, next);
+                });
+            },
+            appdb.setAddonConfig.bind(null, app.id, 'redis', env),
+            waitForService.bind(null, 'redis-' + app.id, 'CLOUDRON_REDIS_TOKEN')
+        ], function (error) {
+            if (error) debug('Error setting up redis: ', error);
+            callback(error);
         });
     });
 }
