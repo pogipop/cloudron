@@ -1636,4 +1636,6 @@
 * Preserve addon passwords correctly when using v2 manifest
 * Show error message instead of logging out user when invalid 2FA token is provided
 * Ensure redis vars are renamed with manifest v2
+* Add missing Scaleway Object Storage to restore UI
+* Fix Exoscale endpoints in restore UI
 
