@@ -1638,4 +1638,5 @@
 * Ensure redis vars are renamed with manifest v2
 * Add missing Scaleway Object Storage to restore UI
 * Fix Exoscale endpoints in restore UI
+* Reset the app icon when showing the configure UI
 
