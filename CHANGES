@@ -1640,3 +1640,6 @@
 * Fix Exoscale endpoints in restore UI
 * Reset the app icon when showing the configure UI
 
+[4.1.6]
+* Fix issue where CLOUDRON_APP_HOSTNAME was incorrectly set
+
