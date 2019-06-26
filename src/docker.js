@@ -181,6 +181,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
     var manifest = app.manifest;
     var exposedPorts = {}, dockerPortBindings = { };
     var domain = app.fqdn;
+    const hostname = isAppContainer ? app.id : name;
 
     const envPrefix = manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
@@ -240,7 +241,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
         var containerOptions = {
             name: name, // for referencing containers
             Tty: isAppContainer,
-            Hostname: name,
+            Hostname: hostname,
             Image: app.manifest.dockerImage,
             Cmd: (isAppContainer && app.debugMode && app.debugMode.cmd) ? app.debugMode.cmd : cmd,
             Env: stdEnv.concat(addonEnv).concat(portEnv).concat(appEnv),
