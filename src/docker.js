@@ -176,7 +176,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var docker = exports.connection,
-        isAppContainer = !cmd; // non app-containers are like scheduler containers
+        isAppContainer = !cmd; // non app-containers are like scheduler and exec (terminal) containers
 
     var manifest = app.manifest;
     var exposedPorts = {}, dockerPortBindings = { };
