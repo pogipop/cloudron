@@ -486,6 +486,7 @@ function getByContainerId(containerId, callback) {
     });
 }
 
+// returns the app associated with this IP (app or scheduler)
 function getByIpAddress(ip, callback) {
     assert.strictEqual(typeof ip, 'string');
     assert.strictEqual(typeof callback, 'function');
@@ -493,7 +494,14 @@ function getByIpAddress(ip, callback) {
     docker.getContainerIdByIp(ip, function (error, containerId) {
         if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
-        getByContainerId(containerId, callback);
+        docker.inspect(containerId, function (error, result) {
+            if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
+
+            const appId = safe.query(result, 'Config.Labels.appId', null);
+            if (!appId) return callback(new AppsError(AppsError.NOT_FOUND, 'No such app'));
+
+            get(appId, callback);
+        });
     });
 }
 

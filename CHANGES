@@ -1644,4 +1644,5 @@
 * Fix issue where CLOUDRON_APP_HOSTNAME was incorrectly set
 * Remove chat link from the footer of login screen
 * Add support for oplog tailing in mongodb
+* Fix LDAP not accessible via scheduler containers
 
