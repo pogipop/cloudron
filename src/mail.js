@@ -126,7 +126,6 @@ function checkOutboundPort25(callback) {
         'smtp.gmail.com',
         'smtp.live.com',
         'smtp.mail.yahoo.com',
-        'smtp.o2.ie',
         'smtp.comcast.net',
         'smtp.1und1.de',
     ]);
