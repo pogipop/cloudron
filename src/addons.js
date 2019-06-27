@@ -1437,7 +1437,8 @@ function setupMongoDb(app, options, callback) {
         const data = {
             database: app.id,
             username: app.id,
-            password: error ? hat(4 * 128) : existingPassword
+            password: error ? hat(4 * 128) : existingPassword,
+            oplog: !!options.oplog
         };
 
         getServiceDetails('mongodb', 'CLOUDRON_MONGODB_TOKEN', function (error, result) {
@@ -1450,14 +1451,17 @@ function setupMongoDb(app, options, callback) {
                 const envPrefix = app.manifest.manifestVersion <= 1 ? '' : 'CLOUDRON_';
 
                 var env = [
-                    { name: `${envPrefix}MONGODB_URL`, value : `mongodb://${data.username}:${data.password}@mongodb/${data.database}` },
+                    { name: `${envPrefix}MONGODB_URL`, value : `mongodb://${data.username}:${data.password}@mongodb:27017/${data.database}` },
                     { name: `${envPrefix}MONGODB_USERNAME`, value : data.username },
                     { name: `${envPrefix}MONGODB_PASSWORD`, value: data.password },
                     { name: `${envPrefix}MONGODB_HOST`, value : 'mongodb' },
                     { name: `${envPrefix}MONGODB_PORT`, value : '27017' },
-                    { name: `${envPrefix}MONGODB_DATABASE`, value : data.database },
-                    { name: `${envPrefix}MONGODB_REPLICA_SET`, value : 'rs0' }, // only needed if client wants to use rs features
+                    { name: `${envPrefix}MONGODB_DATABASE`, value : data.database }
                 ];
+
+                if (options.oplog) {
+                    env.push({ name: `${envPrefix}MONGODB_OPLOG_URL`, value : `mongodb://${data.username}:${data.password}@mongodb:27017/local?authSource=${data.database}` });
+                }
 
                 debugApp(app, 'Setting mongodb addon config to %j', env);
                 appdb.setAddonConfig(app.id, 'mongodb', env, callback);

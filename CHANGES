@@ -1642,6 +1642,6 @@
 
 [4.1.6]
 * Fix issue where CLOUDRON_APP_HOSTNAME was incorrectly set
-* Add MONGODB_REPLICA_SET env var for mongo addon
 * Remove chat link from the footer of login screen
+* Add support for oplog tailing in mongodb
 
