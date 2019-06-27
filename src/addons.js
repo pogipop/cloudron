@@ -1455,7 +1455,8 @@ function setupMongoDb(app, options, callback) {
                     { name: `${envPrefix}MONGODB_PASSWORD`, value: data.password },
                     { name: `${envPrefix}MONGODB_HOST`, value : 'mongodb' },
                     { name: `${envPrefix}MONGODB_PORT`, value : '27017' },
-                    { name: `${envPrefix}MONGODB_DATABASE`, value : data.database }
+                    { name: `${envPrefix}MONGODB_DATABASE`, value : data.database },
+                    { name: `${envPrefix}MONGODB_REPLICA_SET`, value : 'rs0' }, // only needed if client wants to use rs features
                 ];
 
                 debugApp(app, 'Setting mongodb addon config to %j', env);

@@ -17,7 +17,7 @@ exports = module.exports = {
     'images': {
         'mysql': { repo: 'cloudron/mysql', tag: 'cloudron/mysql:2.0.2@sha256:a28320f313785816be60e3f865e09065504170a3d20ed37de675c719b32b01eb' },
         'postgresql': { repo: 'cloudron/postgresql', tag: 'cloudron/postgresql:2.0.2@sha256:6dcee0731dfb9b013ed94d56205eee219040ee806c7e251db3b3886eaa4947ff' },
-        'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.0.2@sha256:95e006390ddce7db637e1672eb6f3c257d3c2652747424f529b1dee3cbe6728c' },
+        'mongodb': { repo: 'cloudron/mongodb', tag: 'cloudron/mongodb:2.1.0@sha256:5725e01e868529237065bd70c7ae50d1f5576cf66cc2c159b59e7ec922748931' },
         'redis': { repo: 'cloudron/redis', tag: 'cloudron/redis:2.0.0@sha256:8a88dd334b62b578530a014ca1a2425a54cb9df1e475f5d3a36806e5cfa22121' },
         'mail': { repo: 'cloudron/mail', tag: 'cloudron/mail:2.3.1@sha256:9693e3ae42a12a7ac8cf5df94d828d46f5b22b4e2e1c7d1bc614d6ee2a22c365' },
         'graphite': { repo: 'cloudron/graphite', tag: 'cloudron/graphite:2.0.2@sha256:454f035d60b768153d4f31210380271b5ba1c09367c9d95c7fa37f9e39d2f59c' },
