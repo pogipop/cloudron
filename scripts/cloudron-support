@@ -13,6 +13,7 @@ HELP_MESSAGE="
 This script collects diagnostic information to help debug server related issues
 
  Options:
+   --admin-login   Login as administrator
    --enable-ssh    Enable SSH access for the Cloudron support team
    --help          Show this message
 "
@@ -25,13 +26,20 @@ fi
 
 enableSSH="false"
 
-args=$(getopt -o "" -l "help,enable-ssh" -n "$0" -- "$@")
+args=$(getopt -o "" -l "help,enable-ssh,admin-login" -n "$0" -- "$@")
 eval set -- "${args}"
 
 while true; do
     case "$1" in
     --help) echo -e "${HELP_MESSAGE}"; exit 0;;
     --enable-ssh) enableSSH="true"; shift;;
+    --admin-login)
+        admin_username=$(mysql -NB -uroot -ppassword -e "SELECT username FROM box.users WHERE admin=1 LIMIT 1" 2>/dev/null)
+        admin_password=$(pwgen -1s 12)
+        printf '{"username":"%s", "password":"%s"}\n' "${admin_username}" "${admin_password}" > /tmp/cloudron_ghost.json
+        echo "Login as ${admin_username} / ${admin_password} . Remove /tmp/cloudron_ghost.json when done."
+        exit 0
+        ;;
     --) break;;
     *) echo "Unknown option $1"; exit 1;;
     esac
