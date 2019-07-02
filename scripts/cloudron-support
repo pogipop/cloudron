@@ -36,7 +36,7 @@ while true; do
     --admin-login)
         admin_username=$(mysql -NB -uroot -ppassword -e "SELECT username FROM box.users WHERE admin=1 LIMIT 1" 2>/dev/null)
         admin_password=$(pwgen -1s 12)
-        printf '{"username":"%s", "password":"%s"}\n' "${admin_username}" "${admin_password}" > /tmp/cloudron_ghost.json
+        printf '{"%s":"%s"}\n' "${admin_username}" "${admin_password}" > /tmp/cloudron_ghost.json
         echo "Login as ${admin_username} / ${admin_password} . Remove /tmp/cloudron_ghost.json when done."
         exit 0
         ;;
