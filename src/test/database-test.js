@@ -416,7 +416,6 @@ describe('database', function () {
             debugMode: null,
             robotsTxt: null,
             enableBackup: true,
-            ownerId: USER_0.id,
             env: {},
             mailboxName: 'talktome',
             enableAutomaticUpdate: true,
@@ -426,7 +425,7 @@ describe('database', function () {
         };
 
         it('cannot delete referenced domain', function (done) {
-            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, function (error) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0, function (error) {
                 expect(error).to.be(null);
 
                 domaindb.del(DOMAIN_0.domain, function (error) {
@@ -996,7 +995,6 @@ describe('database', function () {
             debugMode: null,
             robotsTxt: null,
             enableBackup: true,
-            ownerId: USER_0.id,
             alternateDomains: [],
             env: {
                 'CUSTOM_KEY': 'CUSTOM_VALUE'
@@ -1030,7 +1028,6 @@ describe('database', function () {
             debugMode: null,
             robotsTxt: null,
             enableBackup: true,
-            ownerId: USER_0.id,
             alternateDomains: [],
             env: {},
             mailboxName: 'callme',
@@ -1065,7 +1062,7 @@ describe('database', function () {
         });
 
         it('add succeeds', function (done) {
-            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, APP_0.portBindings, APP_0, function (error) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.portBindings, APP_0, function (error) {
                 expect(error).to.be(null);
                 done();
             });
@@ -1089,7 +1086,7 @@ describe('database', function () {
         });
 
         it('add of same app fails', function (done) {
-            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, [], APP_0, function (error) {
+            appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, [], APP_0, function (error) {
                 expect(error).to.be.a(DatabaseError);
                 expect(error.reason).to.be(DatabaseError.ALREADY_EXISTS);
                 done();
@@ -1162,7 +1159,7 @@ describe('database', function () {
         });
 
         it('add second app succeeds', function (done) {
-            appdb.add(APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_0.ownerId, [], APP_1, function (error) {
+            appdb.add(APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, [], APP_1, function (error) {
                 expect(error).to.be(null);
                 done();
             });

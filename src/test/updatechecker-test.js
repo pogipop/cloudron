@@ -245,8 +245,7 @@ describe('updatechecker - app - manual (email)', function () {
         portBindings: { PORT: 5678 },
         healthy: null,
         accessRestriction: null,
-        memoryLimit: 0,
-        ownerId: null
+        memoryLimit: 0
     };
 
     before(function (done) {
@@ -263,14 +262,8 @@ describe('updatechecker - app - manual (email)', function () {
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            function (next) {
-                users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
-                    if (error) return next(error);
-
-                    APP_0.ownerId = userObject.id;
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0, next);
-                });
-            },
+            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0),
             settings.setAppAutoupdatePattern.bind(null, constants.AUTOUPDATE_PATTERN_NEVER),
             settingsdb.set.bind(null, settings.CLOUDRON_TOKEN_KEY, 'atoken'),
         ], done);
@@ -363,8 +356,7 @@ describe('updatechecker - app - automatic (no email)', function () {
         portBindings: { PORT: 5678 },
         healthy: null,
         accessRestriction: null,
-        memoryLimit: 0,
-        ownerId: null
+        memoryLimit: 0
     };
 
     before(function (done) {
@@ -381,14 +373,8 @@ describe('updatechecker - app - automatic (no email)', function () {
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            function (next) {
-                users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
-                    if (error) return next(error);
-
-                    APP_0.ownerId = userObject.id;
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0, next);
-                });
-            },
+            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0),
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
             settingsdb.set.bind(null, settings.CLOUDRON_TOKEN_KEY, 'atoken'),
         ], done);
@@ -437,8 +423,7 @@ describe('updatechecker - app - automatic free (email)', function () {
         portBindings: { PORT: 5678 },
         healthy: null,
         accessRestriction: null,
-        memoryLimit: 0,
-        ownerId: null
+        memoryLimit: 0
     };
 
     before(function (done) {
@@ -455,14 +440,8 @@ describe('updatechecker - app - automatic free (email)', function () {
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
-            function (next) {
-                users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, userObject) {
-                    if (error) return next(error);
-
-                    APP_0.ownerId = userObject.id;
-                    appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0, next);
-                });
-            },
+            users.createOwner.bind(null, USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0),
             settings.setAppAutoupdatePattern.bind(null, '00 00 1,3,5,23 * * *'),
             settingsdb.set.bind(null, settings.CLOUDRON_TOKEN_KEY, 'atoken'),
         ], done);

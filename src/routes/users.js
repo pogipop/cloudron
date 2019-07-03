@@ -10,8 +10,7 @@ exports = module.exports = {
     verifyPassword: verifyPassword,
     createInvite: createInvite,
     sendInvite: sendInvite,
-    setGroups: setGroups,
-    transferOwnership: transferOwnership
+    setGroups: setGroups
 };
 
 var assert = require('assert'),
@@ -176,20 +175,6 @@ function setGroups(req, res, next) {
         if (error) return next(new HttpError(500, error));
 
         next(new HttpSuccess(204));
-    });
-}
-
-function transferOwnership(req, res, next) {
-    assert.strictEqual(typeof req.body, 'object');
-    assert.strictEqual(typeof req.params.userId, 'string');
-
-    if (typeof req.body.ownerId !== 'string') return next(new HttpError(400, 'ownerId must be a string'));
-
-    users.transferOwnership(req.params.userId, req.body.ownerId, auditSource.fromRequest(req), function (error) {
-        if (error && error.reason === UsersError.NOT_FOUND) return next(new HttpError(404, 'No such user'));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, {}));
     });
 }
 

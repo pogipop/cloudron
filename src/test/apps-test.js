@@ -115,7 +115,6 @@ describe('Apps', function () {
         memoryLimit: 0,
         robotsTxt: null,
         sso: false,
-        ownerId: USER_0.id,
         env: {
             'CUSTOM_KEY': 'CUSTOM_VALUE'
         },
@@ -135,7 +134,6 @@ describe('Apps', function () {
         portBindings: {},
         accessRestriction: { users: [ 'someuser' ], groups: [ GROUP_0.id ] },
         memoryLimit: 0,
-        ownerId: USER_0.id,
         env: {},
         dataDir: ''
     };
@@ -155,7 +153,6 @@ describe('Apps', function () {
         memoryLimit: 0,
         robotsTxt: null,
         sso: false,
-        ownerId: USER_0.id,
         env: {},
         dataDir: ''
     };
@@ -177,9 +174,9 @@ describe('Apps', function () {
             groupdb.add.bind(null, GROUP_0.id, GROUP_0.name),
             groupdb.add.bind(null, GROUP_1.id, GROUP_1.name),
             groups.addMember.bind(null, GROUP_0.id, USER_1.id),
-            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0),
-            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, APP_1.ownerId, apps._translatePortBindings(APP_1.portBindings, APP_1.manifest), APP_1),
-            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, APP_2.ownerId, apps._translatePortBindings(APP_2.portBindings, APP_2.manifest), APP_2),
+            appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0),
+            appdb.add.bind(null, APP_1.id, APP_1.appStoreId, APP_1.manifest, APP_1.location, APP_1.domain, apps._translatePortBindings(APP_1.portBindings, APP_1.manifest), APP_1),
+            appdb.add.bind(null, APP_2.id, APP_2.appStoreId, APP_2.manifest, APP_2.location, APP_2.domain, apps._translatePortBindings(APP_2.portBindings, APP_2.manifest), APP_2),
         ], done);
     });
 

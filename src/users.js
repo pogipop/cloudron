@@ -29,12 +29,11 @@ exports = module.exports = {
     setTwoFactorAuthenticationSecret: setTwoFactorAuthenticationSecret,
     enableTwoFactorAuthentication: enableTwoFactorAuthentication,
     disableTwoFactorAuthentication: disableTwoFactorAuthentication,
-    transferOwnership: transferOwnership
+
+    count: count
 };
 
-var apps = require('./apps.js'),
-    AppsError = apps.AppsError,
-    assert = require('assert'),
+let assert = require('assert'),
     crypto = require('crypto'),
     config = require('./config.js'),
     constants = require('./constants.js'),
@@ -542,7 +541,7 @@ function createOwner(username, password, email, displayName, auditSource, callba
     // This is only not allowed for the owner
     if (username === '') return callback(new UsersError(UsersError.BAD_FIELD, 'Username cannot be empty'));
 
-    userdb.count(function (error, count) {
+    count(function (error, count) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
         if (count !== 0) return callback(new UsersError(UsersError.ALREADY_EXISTS, 'Owner already exists'));
 
@@ -651,22 +650,6 @@ function disableTwoFactorAuthentication(userId, callback) {
 
     userdb.update(userId, { twoFactorAuthenticationEnabled: false, twoFactorAuthenticationSecret: '' }, function (error) {
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
-
-        callback(null);
-    });
-}
-
-function transferOwnership(oldOwnerId, newOwnerId, auditSource, callback) {
-    assert.strictEqual(typeof oldOwnerId, 'string');
-    assert.strictEqual(typeof newOwnerId, 'string');
-    assert(auditSource && typeof auditSource === 'object');
-    assert.strictEqual(typeof callback, 'function');
-
-    apps.transferOwnership(oldOwnerId, newOwnerId, function (error) {
-        if (error && error.reason === AppsError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND, error.message));
-        if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
-
-        eventlog.add(eventlog.ACTION_USER_TRANSFER, auditSource, { oldOwnerId: oldOwnerId, newOwnerId: newOwnerId });
 
         callback(null);
     });

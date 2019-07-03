@@ -79,7 +79,6 @@ var APP_0 = {
     restoreConfig: null,
     oldConfig: null,
     memoryLimit: 4294967296,
-    ownerId: null,
     mailboxName: 'some-location-0.app'
 };
 
@@ -105,11 +104,12 @@ function setup(done) {
             users.createOwner(USER_0.username, USER_0.password, USER_0.email, USER_0.displayName, AUDIT_SOURCE, function (error, result) {
                 if (error) return callback(error);
 
-                USER_0.id = APP_0.ownerId = result.id;
+                USER_0.id = result.id;
 
-                appdb.add(APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, APP_0.ownerId, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0, callback);
+                callback();
             });
         },
+        appdb.add.bind(null, APP_0.id, APP_0.appStoreId, APP_0.manifest, APP_0.location, APP_0.domain, apps._translatePortBindings(APP_0.portBindings, APP_0.manifest), APP_0),
         (done) => mailboxdb.addMailbox(USER_0.username.toLowerCase(), DOMAIN_0.domain, USER_0.id, done),
         (done) => mailboxdb.setAliasesForName(USER_0.username.toLowerCase(), DOMAIN_0.domain, [ USER_0_ALIAS.toLocaleLowerCase() ], done),
         appdb.update.bind(null, APP_0.id, { containerId: APP_0.containerId }),
@@ -181,6 +181,15 @@ function setup(done) {
                             'MacAddress': '02:42:ac:11:00:02',
                             'IPv4Address': '127.0.0.1/16',
                             'IPv6Address': ''
+                        }
+                    }
+                };
+                status = 200;
+            } else if (req.method === 'GET' && req.url === '/containers/someContainerId/json') {
+                answer = {
+                    Config: {
+                        Labels: {
+                            appId: APP_0.id
                         }
                     }
                 };
@@ -554,42 +563,6 @@ describe('Ldap', function () {
                 });
             });
         });
-
-        it ('lists the owner as admin', function (done) {
-            // make a normal user the owner
-            appdb.update(APP_0.id, { ownerId: USER_1.id, accessRestriction: { users: [], groups: [ GROUP_ID ] } }, function (error) {
-                expect(error).to.be(null);
-
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
-
-                var opts = {
-                    filter: 'objectcategory=person'
-                };
-
-                client.search('ou=users,dc=cloudron', opts, function (error, result) {
-                    expect(error).to.be(null);
-                    expect(result).to.be.an(EventEmitter);
-
-                    var entries = [];
-
-                    result.on('searchEntry', function (entry) { entries.push(entry.object); });
-                    result.on('error', done);
-                    result.on('end', function (result) {
-                        expect(result.status).to.equal(0);
-                        expect(entries.length).to.equal(2);
-                        entries.sort(function (a, b) { return a.username > b.username; });
-
-                        expect(entries[0].username).to.equal(USER_0.username.toLowerCase());
-                        expect(entries[1].username).to.equal(USER_1.username.toLowerCase());
-                        expect(entries[1].isadmin).to.equal('1');
-
-                        client.unbind();
-
-                        appdb.update(APP_0.id, { ownerId: USER_0.id, accessRestriction: null }, done);
-                    });
-                });
-            });
-        });
     });
 
     describe('search groups', function () {
@@ -757,45 +730,6 @@ describe('Ldap', function () {
                     expect(entries[1].memberuid).to.equal(USER_0.id);
                     client.unbind();
                     done();
-                });
-            });
-        });
-
-        it ('shows owner as admin', function (done) {
-            appdb.update(APP_0.id, { ownerId: USER_1.id, accessRestriction: { users: [], groups: [ GROUP_ID ] } }, function (error) {
-                expect(error).to.be(null);
-
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
-
-                var opts = {
-                    filter: '&(objectclass=group)(cn=*)'
-                };
-
-                client.search('ou=groups,dc=cloudron', opts, function (error, result) {
-                    expect(error).to.be(null);
-                    expect(result).to.be.an(EventEmitter);
-
-                    var entries = [];
-
-                    result.on('searchEntry', function (entry) { entries.push(entry.object); });
-                    result.on('error', done);
-                    result.on('end', function (result) {
-                        expect(result.status).to.equal(0);
-                        expect(entries.length).to.equal(2);
-                        expect(entries[0].cn).to.equal('users');
-                        expect(entries[0].memberuid.length).to.equal(2);
-                        expect(entries[0].memberuid[0]).to.equal(USER_0.id);
-                        expect(entries[0].memberuid[1]).to.equal(USER_1.id);
-                        expect(entries[1].cn).to.equal('admins');
-
-                        expect(entries[1].memberuid.length).to.equal(2);
-                        expect(entries[1].memberuid[0]).to.equal(USER_0.id);
-                        expect(entries[1].memberuid[1]).to.equal(USER_1.id);
-
-                        client.unbind();
-
-                        appdb.update(APP_0.id, { ownerId: USER_0.id, accessRestriction: null }, done);
-                    });
                 });
             });
         });

@@ -46,9 +46,6 @@ exports = module.exports = {
     downloadFile: downloadFile,
     uploadFile: uploadFile,
 
-    setOwner: setOwner,
-    transferOwnership: transferOwnership,
-
     PORT_TYPE_TCP: 'tcp',
     PORT_TYPE_UDP: 'udp',
 
@@ -384,13 +381,13 @@ function removeInternalFields(app) {
         'location', 'domain', 'fqdn', 'mailboxName',
         'accessRestriction', 'manifest', 'portBindings', 'iconUrl', 'memoryLimit',
         'sso', 'debugMode', 'robotsTxt', 'enableBackup', 'creationTime', 'updateTime', 'ts', 'tags',
-        'label', 'alternateDomains', 'ownerId', 'env', 'enableAutomaticUpdate', 'dataDir');
+        'label', 'alternateDomains', 'env', 'enableAutomaticUpdate', 'dataDir');
 }
 
 // non-admins can only see these
 function removeRestrictedFields(app) {
     return _.pick(app,
-        'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health', 'ownerId',
+        'id', 'appStoreId', 'installationState', 'installationProgress', 'runState', 'health',
         'location', 'domain', 'fqdn', 'manifest', 'portBindings', 'iconUrl', 'creationTime', 'ts', 'tags', 'label');
 }
 
@@ -593,7 +590,6 @@ function install(data, user, auditSource, callback) {
         enableAutomaticUpdate = 'enableAutomaticUpdate' in data ? data.enableAutomaticUpdate : true,
         backupId = data.backupId || null,
         backupFormat = data.backupFormat || 'tgz',
-        ownerId = data.ownerId,
         alternateDomains = data.alternateDomains || [],
         env = data.env || {},
         mailboxName = data.mailboxName || '',
@@ -687,7 +683,7 @@ function install(data, user, auditSource, callback) {
                 env: env
             };
 
-            appdb.add(appId, appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
+            appdb.add(appId, appStoreId, manifest, location, domain, translatePortBindings(portBindings, manifest), data, function (error) {
                 if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings, data.alternateDomains));
                 if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
                 if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
@@ -1080,14 +1076,12 @@ function clone(appId, data, user, auditSource, callback) {
         domain = data.domain.toLowerCase(),
         portBindings = data.portBindings || null,
         backupId = data.backupId,
-        ownerId = data.ownerId,
         mailboxName = data.mailboxName || '';
 
     assert.strictEqual(typeof backupId, 'string');
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof portBindings, 'object');
-    assert(ownerId === null || typeof ownerId === 'string');
 
     get(appId, function (error, app) {
         if (error) return callback(error);
@@ -1136,7 +1130,7 @@ function clone(appId, data, user, auditSource, callback) {
                     env: app.env
                 };
 
-                appdb.add(newAppId, app.appStoreId, manifest, location, domain, ownerId, translatePortBindings(portBindings, manifest), data, function (error) {
+                appdb.add(newAppId, app.appStoreId, manifest, location, domain, translatePortBindings(portBindings, manifest), data, function (error) {
                     if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(getDuplicateErrorDetails(error, location, domainObject, portBindings, []));
                     if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
 
@@ -1525,30 +1519,5 @@ function uploadFile(appId, sourceFilePath, destFilePath, callback) {
         stream.on('finish', done);
 
         readFile.pipe(stream);
-    });
-}
-
-function setOwner(appId, ownerId, callback) {
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    appdb.setOwner(appId, ownerId, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-        callback();
-    });
-}
-
-function transferOwnership(oldOwnerId, newOwnerId, callback) {
-    assert.strictEqual(typeof oldOwnerId, 'string');
-    assert.strictEqual(typeof newOwnerId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    appdb.transferOwnership(oldOwnerId, newOwnerId, function (error) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new AppsError(AppsError.NOT_FOUND, error.message));
-        if (error) return callback(new AppsError(AppsError.INTERNAL_ERROR, error));
-
-        callback();
     });
 }

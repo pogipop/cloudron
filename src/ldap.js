@@ -135,7 +135,7 @@ function userSearch(req, res, next) {
             var dn = ldap.parseDN('cn=' + entry.id + ',ou=users,dc=cloudron');
 
             var groups = [ GROUP_USERS_DN ];
-            if (entry.admin || req.app.ownerId === entry.id) groups.push(GROUP_ADMINS_DN);
+            if (entry.admin) groups.push(GROUP_ADMINS_DN);
 
             var displayName = entry.displayName || entry.username || ''; // displayName can be empty and username can be null
             var nameParts = displayName.split(' ');
@@ -155,7 +155,7 @@ function userSearch(req, res, next) {
                     givenName: firstName,
                     username: entry.username,
                     samaccountname: entry.username,      // to support ActiveDirectory clients
-                    isadmin: (entry.admin || req.app.ownerId === entry.id) ? 1 : 0,
+                    isadmin: entry.admin,
                     memberof: groups
                 }
             };
@@ -195,7 +195,7 @@ function groupSearch(req, res, next) {
 
         groups.forEach(function (group) {
             var dn = ldap.parseDN('cn=' + group.name + ',ou=groups,dc=cloudron');
-            var members = group.admin ? result.filter(function (entry) { return entry.admin || req.app.ownerId === entry.id; }) : result;
+            var members = group.admin ? result.filter(function (entry) { return entry.admin; }) : result;
 
             var obj = {
                 dn: dn.toString(),
@@ -244,7 +244,7 @@ function groupAdminsCompare(req, res, next) {
         // we only support memberuid here, if we add new group attributes later add them here
         if (req.attribute === 'memberuid') {
             var found = result.find(function (u) { return u.id === req.value; });
-            if (found && (found.admin || req.app.ownerId == found.id)) return res.end(true);
+            if (found && found.admin) return res.end(true);
         }
 
         res.end(false);

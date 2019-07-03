@@ -173,7 +173,6 @@ function initializeExpressSync() {
     router.put ('/api/v1/users/:userId/groups', usersManageScope, routes.users.setGroups);
     router.post('/api/v1/users/:userId/send_invite', usersManageScope, routes.users.sendInvite);
     router.post('/api/v1/users/:userId/create_invite', usersManageScope, routes.users.createInvite);
-    router.post('/api/v1/users/:userId/transfer', usersManageScope, routes.users.transferOwnership);
 
     // Group management
     router.get ('/api/v1/groups', usersReadScope, routes.groups.list);
@@ -240,7 +239,6 @@ function initializeExpressSync() {
     router.post('/api/v1/apps/:id/clone',     appsManageScope, routes.apps.cloneApp);
     router.get ('/api/v1/apps/:id/download',  appsManageScope, routes.apps.downloadFile);
     router.post('/api/v1/apps/:id/upload',    appsManageScope, multipart, routes.apps.uploadFile);
-    router.post('/api/v1/apps/:id/owner',     appsManageScope, routes.apps.setOwner);
 
     // settings routes (these are for the settings tab - avatar & name have public routes for normal users. see above)
     router.get ('/api/v1/settings/:setting', settingsScope, routes.settings.get);

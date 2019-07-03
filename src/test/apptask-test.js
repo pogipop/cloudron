@@ -91,8 +91,7 @@ var APP = {
     httpPort: 4567,
     portBindings: null,
     accessRestriction: null,
-    memoryLimit: 0,
-    ownerId: ADMIN.id
+    memoryLimit: 0
 };
 
 var awsHostedZones;
@@ -123,7 +122,7 @@ describe('apptask', function () {
             database._clear,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             userdb.add.bind(null, ADMIN.id, ADMIN),
-            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.ownerId, APP.portBindings, APP)
+            appdb.add.bind(null, APP.id, APP.appStoreId, APP.manifest, APP.location, APP.domain, APP.portBindings, APP)
         ], done);
     });
 

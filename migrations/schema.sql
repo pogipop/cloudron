@@ -93,9 +93,6 @@ CREATE TABLE IF NOT EXISTS apps(
     oldConfigJson TEXT, // used to pass old config to apptask (configure, restore)
     updateConfigJson TEXT, // used to pass new config to apptask (update)
 
-    ownerId VARCHAR(128),
-
-    FOREIGN KEY(ownerId) REFERENCES users(id),
     PRIMARY KEY(id));
 
 CREATE TABLE IF NOT EXISTS appPortBindings(

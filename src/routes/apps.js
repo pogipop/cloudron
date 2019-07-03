@@ -21,8 +21,6 @@ exports = module.exports = {
 
     cloneApp: cloneApp,
 
-    setOwner: setOwner,
-
     uploadFile: uploadFile,
     downloadFile: downloadFile
 };
@@ -80,7 +78,6 @@ function installApp(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
     var data = req.body;
-    data.ownerId = req.user.id;
 
     // atleast one
     if ('manifest' in data && typeof data.manifest !== 'object') return next(new HttpError(400, 'manifest must be an object'));
@@ -233,7 +230,6 @@ function cloneApp(req, res, next) {
     assert.strictEqual(typeof req.params.id, 'string');
 
     var data = req.body;
-    data.ownerId = req.user.id;
 
     debug('Clone app id:%s', req.params.id);
 
@@ -582,19 +578,5 @@ function downloadFile(req, res, next) {
         res.writeHead(200, headers);
 
         stream.pipe(res);
-    });
-}
-
-function setOwner(req, res, next) {
-    assert.strictEqual(typeof req.params.id, 'string');
-    assert.strictEqual(typeof req.body, 'object');
-
-    if (typeof req.body.ownerId !== 'string') return next(new HttpError(400, 'ownerId must be a string'));
-
-    apps.setOwner(req.params.id, req.body.ownerId, function (error) {
-        if (error && error.reason === AppsError.NOT_FOUND) return next(new HttpError(404, error.message));
-        if (error) return next(new HttpError(500, error));
-
-        next(new HttpSuccess(200, { }));
     });
 }

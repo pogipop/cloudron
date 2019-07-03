@@ -25,9 +25,6 @@ exports = module.exports = {
     setRunCommand: setRunCommand,
     getAppStoreIds: getAppStoreIds,
 
-    setOwner: setOwner,
-    transferOwnership: transferOwnership,
-
     // installation codes (keep in sync in UI)
     ISTATE_PENDING_INSTALL: 'pending_install', // installs and fresh reinstalls
     ISTATE_PENDING_CLONE: 'pending_clone', // clone
@@ -70,7 +67,7 @@ var APPS_FIELDS_PREFIXED = [ 'apps.id', 'apps.appStoreId', 'apps.installationSta
     'apps.accessRestrictionJson', 'apps.restoreConfigJson', 'apps.oldConfigJson', 'apps.updateConfigJson', 'apps.memoryLimit',
     'apps.label', 'apps.tagsJson',
     'apps.sso', 'apps.debugModeJson', 'apps.robotsTxt', 'apps.enableBackup',
-    'apps.creationTime', 'apps.updateTime', 'apps.ownerId', 'apps.mailboxName', 'apps.enableAutomaticUpdate',
+    'apps.creationTime', 'apps.updateTime', 'apps.mailboxName', 'apps.enableAutomaticUpdate',
     'apps.dataDir', 'apps.ts', 'apps.healthTime' ].join(',');
 
 var PORT_BINDINGS_FIELDS = [ 'hostPort', 'type', 'environmentVariable', 'appId' ].join(',');
@@ -257,14 +254,13 @@ function getAll(callback) {
     });
 }
 
-function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, data, callback) {
+function add(id, appStoreId, manifest, location, domain, portBindings, data, callback) {
     assert.strictEqual(typeof id, 'string');
     assert.strictEqual(typeof appStoreId, 'string');
     assert(manifest && typeof manifest === 'object');
     assert.strictEqual(typeof manifest.version, 'string');
     assert.strictEqual(typeof location, 'string');
     assert.strictEqual(typeof domain, 'string');
-    assert.strictEqual(typeof ownerId, 'string');
     assert.strictEqual(typeof portBindings, 'object');
     assert(data && typeof data === 'object');
     assert.strictEqual(typeof callback, 'function');
@@ -290,10 +286,10 @@ function add(id, appStoreId, manifest, location, domain, ownerId, portBindings, 
 
     queries.push({
         query: 'INSERT INTO apps (id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, '
-            + 'restoreConfigJson, sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson) '
-            + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            + 'restoreConfigJson, sso, debugModeJson, robotsTxt, mailboxName, label, tagsJson) '
+            + ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         args: [ id, appStoreId, manifestJson, installationState, accessRestrictionJson, memoryLimit, restoreConfigJson,
-            sso, debugModeJson, robotsTxt, ownerId, mailboxName, label, tagsJson ]
+            sso, debugModeJson, robotsTxt, mailboxName, label, tagsJson ]
     });
 
     queries.push({
@@ -646,33 +642,5 @@ function getAddonConfigByName(appId, addonId, namePattern, callback) {
         if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND));
 
         callback(null, results[0].value);
-    });
-}
-
-function setOwner(appId, ownerId, callback) {
-    assert.strictEqual(typeof appId, 'string');
-    assert.strictEqual(typeof ownerId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    database.query('UPDATE apps SET ownerId=? WHERE appId=?', [ ownerId, appId ], function (error, results) {
-        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-
-        if (results.length === 0) return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such app'));
-
-        callback(null);
-    });
-}
-
-function transferOwnership(oldOwnerId, newOwnerId, callback) {
-    assert.strictEqual(typeof oldOwnerId, 'string');
-    assert.strictEqual(typeof newOwnerId, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    database.query('UPDATE apps SET ownerId=? WHERE ownerId=?', [ newOwnerId, oldOwnerId ], function (error) {
-        if (error && error.code === 'ER_NO_REFERENCED_ROW_2') return callback(new DatabaseError(DatabaseError.NOT_FOUND, 'No such user'));
-        if (error) return callback(new DatabaseError(DatabaseError.INTERNAL_ERROR, error));
-
-        callback(null);
     });
 }
