@@ -1646,3 +1646,6 @@
 * Add support for oplog tailing in mongodb
 * Fix LDAP not accessible via scheduler containers
 
+[4.2.0]
+* Fix issue where login looped when admin bit was removed
+
