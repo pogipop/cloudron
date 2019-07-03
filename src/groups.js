@@ -20,7 +20,9 @@ exports = module.exports = {
     getGroups: getGroups,
 
     setMembership: setMembership,
-    getMembership: getMembership
+    getMembership: getMembership,
+
+    count: count
 };
 
 var assert = require('assert'),
@@ -266,5 +268,15 @@ function getGroups(userId, callback) {
         if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
 
         callback(null, results);
+    });
+}
+
+function count(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    groupdb.count(function (error, count) {
+        if (error) return callback(new GroupsError(GroupsError.INTERNAL_ERROR, error));
+
+        callback(null, count);
     });
 }

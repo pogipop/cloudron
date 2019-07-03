@@ -32,6 +32,7 @@ var apps = require('./apps.js'),
     debug = require('debug')('box:appstore'),
     domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
+    groups = require('./groups.js'),
     mail = require('./mail.js'),
     os = require('os'),
     safe = require('safetydance'),
@@ -207,7 +208,7 @@ function unpurchaseApp(appId, data, callback) {
 function sendAliveStatus(callback) {
     callback = callback || NOOP_CALLBACK;
 
-    let allSettings, allDomains, mailDomains, loginEvents, userCount;
+    let allSettings, allDomains, mailDomains, loginEvents, userCount, groupCount;
 
     async.series([
         function (callback) {
@@ -245,6 +246,13 @@ function sendAliveStatus(callback) {
                 callback();
             });
         },
+        function (callback) {
+            groups.count(function (error, result) {
+                if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
+                groupCount = result;
+                callback();
+            });
+        }
     ], function (error) {
         if (error) return callback(error);
 
@@ -264,6 +272,7 @@ function sendAliveStatus(callback) {
                 relayProviders: Array.from(new Set(mailDomains.map(function (d) { return d.relay.provider; })))
             },
             userCount: userCount,
+            groupCount: groupCount,
             appAutoupdatePattern: allSettings[settings.APP_AUTOUPDATE_PATTERN_KEY],
             boxAutoupdatePattern: allSettings[settings.BOX_AUTOUPDATE_PATTERN_KEY],
             timeZone: allSettings[settings.TIME_ZONE_KEY],
