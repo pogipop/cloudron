@@ -1649,3 +1649,6 @@
 [4.1.7]
 * Fix issue where login looped when admin bit was removed
 
+[4.2.0]
+* Fix issue where tar backups with files > 8GB was corrupt
+

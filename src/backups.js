@@ -291,6 +291,9 @@ function tarPack(dataLayout, key, callback) {
         },
         map: function(header) {
             header.name = dataLayout.toRemotePath(header.name);
+            // the tar pax format allows us to encode filenames > 100 and size > 8GB (see #640)
+            // https://www.systutorials.com/docs/linux/man/5-star/
+            if (header.size > 8589934590 || header.name > 99) header.pax = { size: header.size };
             return header;
         },
         strict: false // do not error for unknown types (skip fifo, char/block devices)
