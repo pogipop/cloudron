@@ -189,6 +189,7 @@ function createSubcontainer(app, name, cmd, options, callback) {
         'CLOUDRON=1',
         'CLOUDRON_PROXY_IP=172.18.0.1',
         `CLOUDRON_APP_HOSTNAME=${app.id}`,
+        `CLOUDRON_ADMIN_EMAIL=${app.adminEmail}`,
         `${envPrefix}WEBADMIN_ORIGIN=${config.adminOrigin()}`,
         `${envPrefix}API_ORIGIN=${config.adminOrigin()}`,
         `${envPrefix}APP_ORIGIN=https://${domain}`,
