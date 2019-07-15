@@ -1651,4 +1651,5 @@
 
 [4.2.0]
 * Fix issue where tar backups with files > 8GB was corrupt
+* Add SparkPost as mail relay backend
 
