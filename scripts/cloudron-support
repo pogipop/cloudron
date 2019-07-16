@@ -52,7 +52,7 @@ if [[ "`df --output="avail" / | sed -n 2p`" -lt "10240" ]]; then
     echo ""
     df -h
     echo ""
-    echo "To recover from a full disk, follow the guide at https://cloudron.io/documentation/server/#recovery-after-disk-full"
+    echo "To recover from a full disk, follow the guide at https://cloudron.io/documentation/troubleshooting/#recovery-after-disk-full"
     exit 1
 fi
 
