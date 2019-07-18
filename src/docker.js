@@ -132,7 +132,7 @@ function pullImage(manifest, callback) {
     shell.spawn('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], {}, function (error) {
         if (error) {
             debug(`pullImage: Error pulling image ${manifest.dockerImage} of ${manifest.id}: ${error.message}`);
-            return callback(new Error('Failed to pull image'));
+            return callback(new Error('Failed to pull image. Please check if disk is full or try again in sometime.'));
         }
 
         var image = docker.getImage(manifest.dockerImage);
