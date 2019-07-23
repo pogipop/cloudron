@@ -1653,4 +1653,5 @@
 * Fix issue where tar backups with files > 8GB was corrupt
 * Add SparkPost as mail relay backend
 * Add Wasabi storage backend
+* TOTP tokens are now checked for with +- 60 seconds
 

@@ -263,7 +263,7 @@ function login(req, res) {
                 return res.redirect('/api/v1/session/login?' + failureQuery);
             }
 
-            let verified = speakeasy.totp.verify({ secret: req.user.twoFactorAuthenticationSecret, encoding: 'base32', token: req.body.totpToken });
+            let verified = speakeasy.totp.verify({ secret: req.user.twoFactorAuthenticationSecret, encoding: 'base32', token: req.body.totpToken, window: 2 });
             if (!verified) {
                 let failureQuery = querystring.stringify({ error: 'The 2FA token is invalid', returnTo: returnTo });
                 return res.redirect('/api/v1/session/login?' + failureQuery);
