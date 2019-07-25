@@ -24,7 +24,6 @@ exports = module.exports = {
 
     // these values are derived
     adminOrigin: adminOrigin,
-    internalAdminOrigin: internalAdminOrigin,
     adminFqdn: adminFqdn,
     mailFqdn: mailFqdn,
 
@@ -162,10 +161,6 @@ function mailFqdn() {
 
 function adminOrigin() {
     return 'https://' + adminFqdn();
-}
-
-function internalAdminOrigin() {
-    return 'http://127.0.0.1:' + get('port');
 }
 
 function database() {
