@@ -169,7 +169,7 @@ function getConfig(callback) {
             adminDomain: config.adminDomain(),
             adminFqdn: config.adminFqdn(),
             mailFqdn: config.mailFqdn(),
-            version: config.version(),
+            version: constants.VERSION,
             isDemo: config.isDemo(),
             memory: os.totalmem(),
             provider: config.provider(),

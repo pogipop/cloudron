@@ -1224,11 +1224,11 @@ function checkManifestConstraints(manifest) {
 
     if (!manifest.dockerImage) return new AppsError(AppsError.BAD_FIELD, 'Missing dockerImage'); // dockerImage is optional in manifest
 
-    if (semver.valid(manifest.maxBoxVersion) && semver.gt(config.version(), manifest.maxBoxVersion)) {
+    if (semver.valid(manifest.maxBoxVersion) && semver.gt(constants.VERSION, manifest.maxBoxVersion)) {
         return new AppsError(AppsError.BAD_FIELD, 'Box version exceeds Apps maxBoxVersion');
     }
 
-    if (semver.valid(manifest.minBoxVersion) && semver.gt(manifest.minBoxVersion, config.version())) {
+    if (semver.valid(manifest.minBoxVersion) && semver.gt(manifest.minBoxVersion, constants.VERSION)) {
         return new AppsError(AppsError.BAD_FIELD, 'App version requires a new platform version');
     }
 

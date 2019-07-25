@@ -252,7 +252,7 @@ function restore(backupConfig, backupId, version, auditSource, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (!semver.valid(version)) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'version is not a valid semver'));
-    if (semver.major(config.version()) !== semver.major(version) || semver.minor(config.version()) !== semver.minor(version)) return callback(new ProvisionError(ProvisionError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
+    if (semver.major(constants.VERSION) !== semver.major(version) || semver.minor(constants.VERSION) !== semver.minor(version)) return callback(new ProvisionError(ProvisionError.BAD_STATE, `Run cloudron-setup with --version ${version} to restore from this backup`));
 
     if (gProvisionStatus.setup.active || gProvisionStatus.restore.active) return callback(new ProvisionError(ProvisionError.BAD_STATE, 'Already setting up or restoring'));
 
@@ -306,7 +306,7 @@ function getStatus(callback) {
             if (error) return callback(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
 
             callback(null, _.extend({
-                version: config.version(),
+                version: constants.VERSION,
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
                 provider: config.provider(),
                 cloudronName: cloudronName,

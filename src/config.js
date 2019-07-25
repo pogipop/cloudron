@@ -20,7 +20,6 @@ exports = module.exports = {
     setFqdn: setAdminDomain,
     setAdminDomain: setAdminDomain,
     setAdminFqdn: setAdminFqdn,
-    version: version,
     database: database,
 
     // these values are derived
@@ -176,11 +175,6 @@ function internalAdminOrigin() {
 
 function sysadminOrigin() {
     return 'http://127.0.0.1:' + get('sysadminPort');
-}
-
-function version() {
-    if (exports.TEST) return '3.0.0-test';
-    return fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim();
 }
 
 function database() {

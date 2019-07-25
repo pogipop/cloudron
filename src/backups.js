@@ -47,6 +47,7 @@ var addons = require('./addons.js'),
     assert = require('assert'),
     backupdb = require('./backupdb.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     crypto = require('crypto'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -768,12 +769,12 @@ function rotateBoxBackup(backupConfig, tag, appBackupIds, progressCallback, call
     if (!snapshotInfo) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, 'Snapshot info missing or corrupt'));
 
     const snapshotTime = snapshotInfo.timestamp.replace(/[T.]/g, '-').replace(/[:Z]/g,''); // add this to filename to make it unique, so it's easy to download them
-    const backupId = util.format('%s/box_%s_v%s', tag, snapshotTime, config.version());
+    const backupId = util.format('%s/box_%s_v%s', tag, snapshotTime, constants.VERSION);
     const format = backupConfig.format;
 
     debug(`Rotating box backup to id ${backupId}`);
 
-    backupdb.add(backupId, { version: config.version(), type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, manifest: null, format: format }, function (error) {
+    backupdb.add(backupId, { version: constants.VERSION, type: backupdb.BACKUP_TYPE_BOX, dependsOn: appBackupIds, manifest: null, format: format }, function (error) {
         if (error) return callback(new BackupsError(BackupsError.INTERNAL_ERROR, error));
 
         var copy = api(backupConfig.provider).copy(backupConfig, getBackupFilePath(backupConfig, 'snapshot/box', format), getBackupFilePath(backupConfig, backupId, format));

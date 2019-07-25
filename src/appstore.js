@@ -28,6 +28,7 @@ var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     custom = require('./custom.js'),
     debug = require('debug')('box:appstore'),
     domains = require('./domains.js'),
@@ -279,7 +280,7 @@ function sendAliveStatus(callback) {
         };
 
         var data = {
-            version: config.version(),
+            version: constants.VERSION,
             adminFqdn: config.adminFqdn(),
             provider: config.provider(),
             backendSettings: backendSettings,
@@ -317,7 +318,7 @@ function getBoxUpdate(callback) {
 
         const url = `${config.apiServerOrigin()}/api/v1/boxupdate`;
 
-        superagent.get(url).query({ accessToken: token, boxVersion: config.version() }).timeout(10 * 1000).end(function (error, result) {
+        superagent.get(url).query({ accessToken: token, boxVersion: constants.VERSION }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
@@ -326,7 +327,7 @@ function getBoxUpdate(callback) {
 
             var updateInfo = result.body;
 
-            if (!semver.valid(updateInfo.version) || semver.gt(config.version(), updateInfo.version)) {
+            if (!semver.valid(updateInfo.version) || semver.gt(constants.VERSION, updateInfo.version)) {
                 return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, util.format('Invalid update version: %s %s', result.statusCode, result.text)));
             }
 
@@ -352,7 +353,7 @@ function getAppUpdate(app, callback) {
 
         const url = `${config.apiServerOrigin()}/api/v1/appupdate`;
 
-        superagent.get(url).query({ accessToken: token, boxVersion: config.version(), appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
+        superagent.get(url).query({ accessToken: token, boxVersion: constants.VERSION, appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
             if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
             if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));
@@ -488,7 +489,7 @@ function getApps(callback) {
         settings.getUnstableAppsConfig(function (error, unstable) {
             if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
             const url = `${config.apiServerOrigin()}/api/v1/apps`;
-            superagent.get(url).query({ accessToken: token, boxVersion: config.version(), unstable: unstable }).timeout(10 * 1000).end(function (error, result) {
+            superagent.get(url).query({ accessToken: token, boxVersion: constants.VERSION, unstable: unstable }).timeout(10 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
                 if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
                 if (result.statusCode === 422) return callback(new AppstoreError(AppstoreError.LICENSE_ERROR, result.body.message));

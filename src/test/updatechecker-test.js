@@ -46,7 +46,7 @@ var AUDIT_SOURCE = {
     ip: '1.2.3.4'
 };
 
-const UPDATE_VERSION = semver.inc(config.version(), 'major');
+const UPDATE_VERSION = semver.inc(constants.VERSION, 'major');
 
 function checkMails(number, done) {
     // mails are enqueued async
@@ -97,7 +97,7 @@ describe('updatechecker - box - manual (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken' })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken' })
             .reply(204, { } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -114,7 +114,7 @@ describe('updatechecker - box - manual (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken' })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken' })
             .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -132,7 +132,7 @@ describe('updatechecker - box - manual (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken' })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken' })
             .reply(404, { version: '2.0.0-pre.0', changelog: [''], sourceTarballUrl: 'box-pre.tar.gz' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -170,7 +170,7 @@ describe('updatechecker - box - automatic (no email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken' })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken' })
             .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -209,7 +209,7 @@ describe('updatechecker - box - automatic free (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/boxupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken' })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken' })
             .reply(200, { version: UPDATE_VERSION, changelog: [''], sourceTarballUrl: 'box.tar.gz', sourceTarballSigUrl: 'box.tar.gz.sig', boxVersionsUrl: 'box.versions', boxVersionsSigUrl: 'box.versions.sig' } );
 
         updatechecker.checkBoxUpdates(function (error) {
@@ -276,7 +276,7 @@ describe('updatechecker - app - manual (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(204, { } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -293,7 +293,7 @@ describe('updatechecker - app - manual (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(500, { update: { manifest: { version: '1.0.0', changelog: '* some changes' } } } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -310,7 +310,7 @@ describe('updatechecker - app - manual (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: '* some changes' } } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -387,7 +387,7 @@ describe('updatechecker - app - automatic (no email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
         updatechecker.checkAppUpdates(function (error) {
@@ -454,7 +454,7 @@ describe('updatechecker - app - automatic free (email)', function () {
 
         var scope = nock('http://localhost:4444')
             .get('/api/v1/appupdate')
-            .query({ boxVersion: config.version(), accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
+            .query({ boxVersion: constants.VERSION, accessToken: 'atoken', appId: APP_0.appStoreId, appVersion: APP_0.manifest.version })
             .reply(200, { manifest: { version: '2.0.0', changelog: 'c' } } );
 
         updatechecker.checkAppUpdates(function (error) {

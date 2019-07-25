@@ -13,6 +13,7 @@ var apps = require('./apps.js'),
     child_process = require('child_process'),
     backups = require('./backups.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     crypto = require('crypto'),
     debug = require('debug')('box:updater'),
     eventlog = require('./eventlog.js'),
@@ -123,8 +124,8 @@ function verifyUpdateInfo(versionsFile, updateInfo, callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var releases = safe.JSON.parse(safe.fs.readFileSync(versionsFile, 'utf8')) || { };
-    if (!releases[config.version()] || !releases[config.version()].next) return callback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, 'No version info'));
-    var nextVersion = releases[config.version()].next;
+    if (!releases[constants.VERSION] || !releases[constants.VERSION].next) return callback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, 'No version info'));
+    var nextVersion = releases[constants.VERSION].next;
     if (typeof releases[nextVersion] !== 'object' || !releases[nextVersion]) return callback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, 'No next version info'));
     if (releases[nextVersion].sourceTarballUrl !== updateInfo.sourceTarballUrl) return callback(new UpdaterError(UpdaterError.EXTERNAL_ERROR, 'Version info mismatch'));
 

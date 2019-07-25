@@ -6,6 +6,7 @@
 'use strict';
 
 var config = require('../config.js'),
+    constants = require('../constants.js'),
     expect = require('expect.js'),
     fs = require('fs'),
     path = require('path');
@@ -25,8 +26,8 @@ describe('config', function () {
     });
 
     it('can get version', function (done) {
-        expect(config.version()).to.be.ok(); // this gets a dummy text string
-        expect(config.version().includes('\n')).to.not.be.ok();
+        expect(constants.VERSION).to.be.ok(); // this gets a dummy text string
+        expect(constants.VERSION.includes('\n')).to.not.be.ok();
         done();
     });
 

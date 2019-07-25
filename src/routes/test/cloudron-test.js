@@ -7,6 +7,7 @@
 
 let async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     hat = require('../../hat.js'),
@@ -189,7 +190,7 @@ describe('Cloudron', function () {
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
                     expect(result.body.webServerOrigin).to.eql(null);
                     expect(result.body.adminFqdn).to.eql(config.adminFqdn());
-                    expect(result.body.version).to.eql(config.version());
+                    expect(result.body.version).to.eql(constants.VERSION);
                     expect(result.body.memory).to.eql(os.totalmem());
                     expect(result.body.cloudronName).to.be.a('string');
 

@@ -7,6 +7,7 @@
 
 var async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
@@ -103,7 +104,7 @@ describe('Appstore Apps API', function () {
 
     it('can list apps', function (done) {
         var scope1 = nock(config.apiServerOrigin())
-            .get(`/api/v1/apps?accessToken=CLOUDRON_TOKEN&boxVersion=${config.version()}&unstable=false`, () => true)
+            .get(`/api/v1/apps?accessToken=CLOUDRON_TOKEN&boxVersion=${constants.VERSION}&unstable=false`, () => true)
             .reply(200, { apps: [] });
 
         superagent.get(SERVER_URL + '/api/v1/appstore/apps')

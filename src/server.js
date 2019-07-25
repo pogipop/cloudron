@@ -10,6 +10,7 @@ var accesscontrol = require('./accesscontrol.js'),
     async = require('async'),
     cloudron = require('./cloudron.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     database = require('./database.js'),
     eventlog = require('./eventlog.js'),
     express = require('express'),
@@ -370,7 +371,7 @@ function start(callback) {
         cloudron.initialize,
         gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, config.get('sysadminPort'), '127.0.0.1'),
-        eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: config.version() })
+        eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: constants.VERSION })
     ], callback);
 }
 

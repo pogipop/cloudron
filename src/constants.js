@@ -1,5 +1,8 @@
 'use strict';
 
+let fs = require('fs'),
+    path = require('path');
+
 exports = module.exports = {
     SMTP_LOCATION: 'smtp',
     IMAP_LOCATION: 'imap',
@@ -30,6 +33,11 @@ exports = module.exports = {
 
     AUTOUPDATE_PATTERN_NEVER: 'never',
 
-    SECRET_PLACEHOLDER: String.fromCharCode(0x25CF).repeat(8)
+    SECRET_PLACEHOLDER: String.fromCharCode(0x25CF).repeat(8),
+
+    CLOUDRON: process.env.BOX_ENV === 'cloudron',
+    TEST: process.env.BOX_ENV === 'test',
+
+    VERSION: process.env.BOX_ENV === 'cloudron' ? fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim() : '4.0.0-test'
 };
 
