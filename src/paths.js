@@ -9,11 +9,12 @@ exports = module.exports = {
     INFRA_VERSION_FILE: path.join(config.baseDir(), 'platformdata/INFRA_VERSION'),
 
     LICENSE_FILE: '/etc/cloudron/LICENSE',
-    CUSTOM_FILE: '/etc/cloudron/custom.yml',
 
     PLATFORM_DATA_DIR: path.join(config.baseDir(), 'platformdata'),
     APPS_DATA_DIR: path.join(config.baseDir(), 'appsdata'),
     BOX_DATA_DIR: path.join(config.baseDir(), 'boxdata'),
+
+    CUSTOM_FILE: path.join(config.baseDir(), 'boxdata/custom.yml'),
 
     ACME_CHALLENGES_DIR: path.join(config.baseDir(), 'platformdata/acme'),
     ADDON_CONFIG_DIR: path.join(config.baseDir(), 'platformdata/addons'),
