@@ -39,7 +39,6 @@ exports = module.exports = {
     getCloudronToken: getCloudronToken,
     setCloudronToken: setCloudronToken,
 
-    get: get,
     getAll: getAll,
 
     // booleans. if you add an entry here, be sure to fix getAll
@@ -480,18 +479,6 @@ function getAll(callback) {
         [exports.BACKUP_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
             result[key] = typeof result[key] === 'object' ? result[key] : safe.JSON.parse(result[key]);
         });
-
-        callback(null, result);
-    });
-}
-
-function get(name, callback) {
-    assert.strictEqual(typeof name, 'string');
-    assert.strictEqual(typeof callback, 'function');
-
-    settingsdb.get(name, function (error, result) {
-        if (error && error.reason === DatabaseError.NOT_FOUND) return callback(null, gDefaults[exports.PLATFORM_CONFIG_KEY]);
-        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
 
         callback(null, result);
     });
