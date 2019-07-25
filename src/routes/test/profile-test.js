@@ -8,6 +8,7 @@
 
 var accesscontrol = require('../../accesscontrol.js'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     hat = require('../../hat.js'),
@@ -16,7 +17,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     server = require('../../server.js'),
     tokendb = require('../../tokendb.js');
 
-const SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + constants.PORT;
 
 const USERNAME_0 = 'superaDmIn';
 const PASSWORD = 'Foobar?1337';

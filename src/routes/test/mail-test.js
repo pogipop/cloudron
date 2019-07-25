@@ -7,6 +7,7 @@
 
 var async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     mail = require('../../mail.js'),
@@ -16,7 +17,7 @@ var async = require('async'),
     userdb = require('../../userdb.js'),
     _ = require('underscore');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 const ADMIN_DOMAIN = {
     domain: 'admin.com',

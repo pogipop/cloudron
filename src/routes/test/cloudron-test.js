@@ -19,7 +19,7 @@ let async = require('async'),
     settings = require('../../settings.js'),
     tokendb = require('../../tokendb.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null; // authentication token
@@ -243,7 +243,7 @@ describe('Cloudron', function () {
         it('logStream - stream logs', function (done) {
             var options = {
                 host: 'localhost',
-                port: config.get('port'),
+                port: constants.PORT,
                 path: '/api/v1/cloudron/logstream/box?lines=10&access_token=' + token,
                 headers: { 'Accept': 'text/event-stream', 'Connection': 'keep-alive' }
             };

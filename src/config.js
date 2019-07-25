@@ -80,7 +80,6 @@ function initConfig() {
     // setup defaults
     data.adminFqdn = '';
     data.adminDomain = '';
-    data.port = 3000;
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
     data.provider = 'generic';
@@ -96,7 +95,6 @@ function initConfig() {
 
     // overrides for local testings
     if (exports.TEST) {
-        data.port = 5454;
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
 
         // see setupTest script how the mysql-server is run

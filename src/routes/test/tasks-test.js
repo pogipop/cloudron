@@ -7,13 +7,14 @@
 
 var async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     server = require('../../server.js'),
     superagent = require('superagent'),
     tasks = require('../../tasks.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;

@@ -8,6 +8,7 @@
 var async = require('async'),
     child_process = require('child_process'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     domaindb = require('../../domaindb.js'),
     expect = require('expect.js'),
@@ -18,7 +19,7 @@ var async = require('async'),
     server = require('../../server.js'),
     _ = require('underscore');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;

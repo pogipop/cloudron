@@ -39,7 +39,7 @@ var appdb = require('../../appdb.js'),
     uuid = require('uuid'),
     _ = require('underscore');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 // Test image information
 var TEST_IMAGE_REPO = 'cloudron/test';
@@ -841,7 +841,7 @@ describe('App installation', function () {
 
     it('logStream - stream logs', function (done) {
         var options = {
-            port: config.get('port'), host: 'localhost', path: '/api/v1/apps/' + APP_ID + '/logstream?access_token=' + token,
+            port: constants.PORT, host: 'localhost', path: '/api/v1/apps/' + APP_ID + '/logstream?access_token=' + token,
             headers: { 'Accept': 'text/event-stream', 'Connection': 'keep-alive' }
         };
 

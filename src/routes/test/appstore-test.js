@@ -16,7 +16,7 @@ var async = require('async'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var AUTHORIZED_KEYS_FILE = path.join(config.baseDir(), 'authorized_keys');

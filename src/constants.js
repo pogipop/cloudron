@@ -3,6 +3,9 @@
 let fs = require('fs'),
     path = require('path');
 
+const CLOUDRON = process.env.BOX_ENV === 'cloudron',
+    TEST = process.env.BOX_ENV === 'test';
+
 exports = module.exports = {
     SMTP_LOCATION: 'smtp',
     IMAP_LOCATION: 'imap',
@@ -21,6 +24,7 @@ exports = module.exports = {
 
     ADMIN_LOCATION: 'my',
 
+    PORT: CLOUDRON ? 3000 : 5454,
     INTERNAL_SMTP_PORT: 2525, // this value comes from the mail container
     SYSADMIN_PORT: 3001,
     LDAP_PORT: 3002,
@@ -40,8 +44,8 @@ exports = module.exports = {
 
     SECRET_PLACEHOLDER: String.fromCharCode(0x25CF).repeat(8),
 
-    CLOUDRON: process.env.BOX_ENV === 'cloudron',
-    TEST: process.env.BOX_ENV === 'test',
+    CLOUDRON: CLOUDRON,
+    TEST: TEST,
 
     VERSION: process.env.BOX_ENV === 'cloudron' ? fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim() : '4.0.0-test'
 };

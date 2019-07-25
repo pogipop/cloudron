@@ -8,6 +8,7 @@
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
     tokendb = require('../../tokendb.js'),
@@ -20,7 +21,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     server = require('../../server.js'),
     users = require('../../users.js');
 
-const SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + constants.PORT;
 
 const DOMAIN_0 = {
     domain: 'example-user-test.com',

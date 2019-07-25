@@ -149,7 +149,7 @@ function validatePortBindings(portBindings, manifest) {
         2004, /* graphite (lo) */
         2020, /* mail server */
         2514, /* cloudron-syslog (lo) */
-        config.get('port'), /* app server (lo) */
+        constants.PORT, /* app server (lo) */
         constants.SYSADMIN_PORT, /* sysadmin app server (lo) */
         constants.INTERNAL_SMTP_PORT, /* internal smtp port (lo) */
         constants.LDAP_PORT,

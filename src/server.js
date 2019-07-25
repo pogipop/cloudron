@@ -369,7 +369,7 @@ function start(callback) {
         routes.accesscontrol.initialize,  // hooks up authentication strategies into passport
         database.initialize,
         cloudron.initialize,
-        gHttpServer.listen.bind(gHttpServer, config.get('port'), '127.0.0.1'),
+        gHttpServer.listen.bind(gHttpServer, constants.PORT, '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, constants.SYSADMIN_PORT, '127.0.0.1'),
         eventlog.add.bind(null, eventlog.ACTION_START, { userId: null, username: 'boot' }, { version: constants.VERSION })
     ], callback);

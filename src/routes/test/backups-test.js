@@ -8,6 +8,7 @@
 var appdb = require('../../appdb.js'),
     async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
     expect = require('expect.js'),
@@ -16,7 +17,7 @@ var appdb = require('../../appdb.js'),
     server = require('../../server.js'),
     settings = require('../../settings.js');
 
-const SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + constants.PORT;
 
 const USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 

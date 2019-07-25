@@ -7,12 +7,13 @@
 'use strict';
 
 var config = require('../config.js'),
+    constants = require('../constants.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     superagent = require('superagent'),
     server = require('../server.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 var DOMAIN = 'example-server-test.com';
 
 function cleanup(done) {

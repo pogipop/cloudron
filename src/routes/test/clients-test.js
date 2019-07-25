@@ -8,6 +8,7 @@
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     clients = require('../../clients.js'),
     database = require('../../database.js'),
     oauth2 = require('../oauth2.js'),
@@ -17,7 +18,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;

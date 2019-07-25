@@ -17,7 +17,7 @@ var async = require('async'),
     settingsdb = require('../../settingsdb.js'),
     superagent = require('superagent');
 
-const SERVER_URL = 'http://localhost:' + config.get('port');
+const SERVER_URL = 'http://localhost:' + constants.PORT;
 
 const USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 

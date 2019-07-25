@@ -12,6 +12,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     clientdb = require('../../clientdb.js'),
     clients = require('../../clients.js'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
     expect = require('expect.js'),
@@ -28,7 +29,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     users = require('../../users.js'),
     uuid = require('uuid');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 let AUDIT_SOURCE = { ip: '1.2.3.4', userId: 'someuserid' };
 

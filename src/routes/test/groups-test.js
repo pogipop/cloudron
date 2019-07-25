@@ -9,6 +9,7 @@
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     hat = require('../../hat.js'),
@@ -16,7 +17,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     superagent = require('superagent'),
     tokendb = require('../../tokendb.js');
 
-var SERVER_URL = 'http://localhost:' + config.get('port');
+var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var USERNAME_1 = 'user', PASSWORD_1 = 'Foobar?1337', EMAIL_1 ='happy@me.com';
