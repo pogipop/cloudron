@@ -45,6 +45,7 @@ exports = module.exports = {
     // booleans. if you add an entry here, be sure to fix getAll
     DYNAMIC_DNS_KEY: 'dynamic_dns',
     UNSTABLE_APPS_KEY: 'unstable_apps',
+    DEMO_KEY: 'demo',
 
     // json. if you add an entry here, be sure to fix getAll
     BACKUP_CONFIG_KEY: 'backup_config',
@@ -58,6 +59,12 @@ exports = module.exports = {
     LICENSE_KEY: 'license_key',
     CLOUDRON_ID_KEY: 'cloudron_id',
     CLOUDRON_TOKEN_KEY: 'cloudron_token',
+
+    API_SERVER_ORIGIN_KEY: 'api_server_origin',
+    WEB_SERVER_ORIGIN_KEY: 'web_server_origin',
+    ADMIN_DOMAIN_KEY: 'admin_domain',
+    ADMIN_FQDN_KEY: 'admin_fqdn',
+    PROVIDER_KEY: 'provider',
 
     // blobs
     CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db but can be used for locked flag
@@ -467,6 +474,7 @@ function getAll(callback) {
         // convert booleans
         result[exports.DYNAMIC_DNS_KEY] = !!result[exports.DYNAMIC_DNS_KEY];
         result[exports.UNSTABLE_APPS_KEY] = !!result[exports.UNSTABLE_APPS_KEY];
+        result[exports.DEMO_KEY] = !!result[exports.DEMO_KEY];
 
         // convert JSON objects
         [exports.BACKUP_CONFIG_KEY, exports.PLATFORM_CONFIG_KEY ].forEach(function (key) {
