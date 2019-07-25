@@ -151,7 +151,7 @@ function validatePortBindings(portBindings, manifest) {
         2514, /* cloudron-syslog (lo) */
         config.get('port'), /* app server (lo) */
         constants.SYSADMIN_PORT, /* sysadmin app server (lo) */
-        config.get('smtpPort'), /* internal smtp port (lo) */
+        constants.INTERNAL_SMTP_PORT, /* internal smtp port (lo) */
         config.get('ldapPort'), /* ldap server (lo) */
         3306, /* mysql (lo) */
         4190, /* managesieve */

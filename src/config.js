@@ -85,7 +85,6 @@ function initConfig() {
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
     data.provider = 'generic';
-    data.smtpPort = 2525; // this value comes from mail container
     data.ldapPort = 3002;
     data.dockerProxyPort = 3003;
 

@@ -84,7 +84,7 @@ function sendMail(mailOptions, callback) {
 
         var transport = nodemailer.createTransport(smtpTransport({
             host: mailServerIp,
-            port: config.get('smtpPort'),
+            port: constants.INTERNAL_SMTP_PORT,
             auth: {
                 user: mailOptions.authUser || `no-reply@${config.adminDomain()}`,
                 pass: relayToken

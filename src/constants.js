@@ -21,6 +21,7 @@ exports = module.exports = {
 
     ADMIN_LOCATION: 'my',
 
+    INTERNAL_SMTP_PORT: 2525, // this value comes from the mail container
     SYSADMIN_PORT: 3001,
 
     NGINX_DEFAULT_CONFIG_FILE_NAME: 'default.conf',
