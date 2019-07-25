@@ -266,7 +266,7 @@ function restore(backupConfig, backupId, version, auditSource, callback) {
 
     users.isActivated(function (error, activated) {
         if (error) return done(new ProvisionError(ProvisionError.INTERNAL_ERROR, error));
-        if (activated) return done(new ProvisionError(ProvisionError.ALREADY_PROVISIONED, 'Already activated'));
+        if (activated) return done(new ProvisionError(ProvisionError.ALREADY_PROVISIONED, 'Already activated. Restore with a fresh Cloudron installation.'));
 
         backups.testConfig(backupConfig, function (error) {
             if (error && error.reason === BackupsError.BAD_FIELD) return done(new ProvisionError(ProvisionError.BAD_FIELD, error.message));
