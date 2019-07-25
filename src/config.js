@@ -85,8 +85,6 @@ function initConfig() {
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
     data.provider = 'generic';
-    data.ldapPort = 3002;
-    data.dockerProxyPort = 3003;
 
     // keep in sync with start.sh
     data.database = {

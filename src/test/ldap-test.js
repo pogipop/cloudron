@@ -10,9 +10,10 @@ var appdb = require('../appdb.js'),
     apps = require('../apps.js'),
     assert = require('assert'),
     async = require('async'),
+    config = require('../config.js'),
+    constants = require('../constants.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
-    config = require('../config.js'),
     EventEmitter = require('events').EventEmitter,
     expect = require('expect.js'),
     groups = require('../groups.js'),
@@ -219,7 +220,7 @@ describe('Ldap', function () {
 
     describe('bind', function () {
         it('fails for nonexisting user', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=doesnotexist,ou=users,dc=cloudron', 'password', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -229,7 +230,7 @@ describe('Ldap', function () {
         });
 
         it('fails with wrong password', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', 'wrongpassword', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
@@ -239,7 +240,7 @@ describe('Ldap', function () {
         });
 
         it('succeeds without accessRestriction', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.id + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
@@ -249,7 +250,7 @@ describe('Ldap', function () {
         });
 
         it('succeeds with username and without accessRestriction', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.username + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
@@ -259,7 +260,7 @@ describe('Ldap', function () {
         });
 
         it('succeeds with email and without accessRestriction', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.email + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be(null);
@@ -273,7 +274,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.email.toLowerCase() + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be(null);
@@ -286,7 +287,7 @@ describe('Ldap', function () {
         });
 
         it('fails with username for mail attribute and without accessRestriction', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('mail=' + USER_0.username + ',ou=users,dc=cloudron', USER_0.password, function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -296,7 +297,7 @@ describe('Ldap', function () {
         });
 
         it('fails with accessRestriction denied', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             appdb.update(APP_0.id, { accessRestriction: { users: [ USER_0.id ], groups: [] }}, function (error) {
                 expect(error).to.eql(null);
@@ -310,7 +311,7 @@ describe('Ldap', function () {
         });
 
         it('succeeds with accessRestriction allowed', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             appdb.update(APP_0.id, { accessRestriction: { users: [ USER_1.id, USER_0.id ], groups: [] }}, function (error) {
                 expect(error).to.eql(null);
@@ -326,7 +327,7 @@ describe('Ldap', function () {
 
     describe('search users', function () {
         it ('fails for non existing tree', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: '(&(l=Seattle)(email=*@' + DOMAIN_0.domain + '))'
@@ -348,7 +349,7 @@ describe('Ldap', function () {
         });
 
         it ('succeeds with basic filter', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: 'objectcategory=person'
@@ -377,7 +378,7 @@ describe('Ldap', function () {
         });
 
         it ('succeeds with pagination', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: 'objectcategory=person',
@@ -411,7 +412,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 var opts = {
                     filter: 'objectcategory=person'
@@ -446,7 +447,7 @@ describe('Ldap', function () {
         });
 
         it ('succeeds with username wildcard filter', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: '&(objectcategory=person)(username=username*)'
@@ -473,7 +474,7 @@ describe('Ldap', function () {
         });
 
         it ('succeeds with username filter', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: '&(objectcategory=person)(username=' + USER_0.username + ')'
@@ -502,7 +503,7 @@ describe('Ldap', function () {
             appdb.update(APP_0.id, { accessRestriction: { users: [], groups: [] } }, function (error) {
                 expect(error).to.be(null);
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 var opts = {
                     filter: 'objectcategory=person'
@@ -534,7 +535,7 @@ describe('Ldap', function () {
             appdb.update(APP_0.id, { accessRestriction: { users: [], groups: [ GROUP_ID ] } }, function (error) {
                 expect(error).to.be(null);
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 var opts = {
                     filter: 'objectcategory=person'
@@ -567,7 +568,7 @@ describe('Ldap', function () {
 
     describe('search groups', function () {
         it ('succeeds with basic filter', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: 'objectclass=group'
@@ -603,7 +604,7 @@ describe('Ldap', function () {
         });
 
         it ('succeeds with cn wildcard filter', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: '&(objectclass=group)(cn=*)'
@@ -635,7 +636,7 @@ describe('Ldap', function () {
         });
 
         it('succeeds with memberuid filter', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: '&(objectclass=group)(memberuid=' + USER_1.id + ')'
@@ -664,7 +665,7 @@ describe('Ldap', function () {
             appdb.update(APP_0.id, { accessRestriction: { users: [], groups: [ GROUP_ID ] } }, function (error) {
                 expect(error).to.be(null);
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 var opts = {
                     filter: '&(objectclass=group)(cn=*)'
@@ -698,7 +699,7 @@ describe('Ldap', function () {
         });
 
         it ('succeeds with pagination', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             var opts = {
                 filter: 'objectclass=group',
@@ -737,7 +738,7 @@ describe('Ldap', function () {
 
     // ldapsearch -LLL -E pr=10/noprompt -x -h localhost -p 3002 -b cn=userName0@example.com,ou=mailboxes,dc=cloudron objectclass=mailbox
     function ldapSearch(dn, filter, callback) {
-        var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+        var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
         var opts = {
             filter: filter,
@@ -866,7 +867,7 @@ describe('Ldap', function () {
 
     describe('user mailbox bind', function () {
         it('email disabled - cannot find domain email', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -880,7 +881,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password + 'nope', function (error) {
                     expect(error).to.be.a(ldap.InvalidCredentialsError);
@@ -897,7 +898,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.username + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
@@ -914,7 +915,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0_ALIAS + '@example.com,domain=example.com,ou=mailboxes,dc=cloudron', USER_0.password, function (error) {
                     expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -929,7 +930,7 @@ describe('Ldap', function () {
 
     describe('user sendmail bind', function () {
         it('email disabled - cannot find domain email', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.InvalidCredentialsError);
@@ -939,7 +940,7 @@ describe('Ldap', function () {
         });
 
         it('email disabled - cannot find reset email', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.email + ',ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -953,7 +954,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.username.toLocaleLowerCase() + '@' + DOMAIN_0.domain + ',ou=sendmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
@@ -970,7 +971,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.username + '@example.com,ou=sendmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                     expect(error).to.be.a(ldap.InvalidCredentialsError);
@@ -990,7 +991,7 @@ describe('Ldap', function () {
         });
 
         it('does not allow with invalid app', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=hacker.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -1000,7 +1001,7 @@ describe('Ldap', function () {
         });
 
         it('does not allow with invalid password', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=sendmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -1010,7 +1011,7 @@ describe('Ldap', function () {
         });
 
         it('allows with valid password', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=sendmail,dc=cloudron', 'sendmailpassword', function (error) {
                 client.unbind();
@@ -1025,7 +1026,7 @@ describe('Ldap', function () {
         });
 
         it('email disabled - cannot find domain email', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -1035,7 +1036,7 @@ describe('Ldap', function () {
         });
 
         it('email disabled - cannot find reset email', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + USER_0.email + ',ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -1049,7 +1050,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password, function (error) {
                     expect(error).not.to.be.ok();
@@ -1066,7 +1067,7 @@ describe('Ldap', function () {
             maildb.update(DOMAIN_0.domain, { enabled: true }, function (error) {
                 expect(error).not.to.be.ok();
 
-                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+                var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
                 client.bind('cn=' + USER_0.username + '@example.com,ou=recvmail,dc=cloudron', USER_0.password + 'nope', function (error) {
                     expect(error).to.be.a(ldap.InvalidCredentialsError);
@@ -1085,7 +1086,7 @@ describe('Ldap', function () {
         });
 
         it('does not allow with invalid app', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=hacker.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -1095,7 +1096,7 @@ describe('Ldap', function () {
         });
 
         it('does not allow with invalid password', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=recvmail,dc=cloudron', 'nope', function (error) {
                 expect(error).to.be.a(ldap.NoSuchObjectError);
@@ -1105,7 +1106,7 @@ describe('Ldap', function () {
         });
 
         it('allows with valid password', function (done) {
-            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + config.get('ldapPort') });
+            var client = ldap.createClient({ url: 'ldap://127.0.0.1:' + constants.LDAP_PORT });
 
             client.bind('cn=' + APP_0.location + '.app@example.com,ou=recvmail,dc=cloudron', 'recvmailpassword', function (error) {
                 client.unbind();

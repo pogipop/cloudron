@@ -9,6 +9,7 @@ var apps = require('./apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     express = require('express'),
     debug = require('debug')('box:dockerproxy'),
     http = require('http'),
@@ -135,9 +136,9 @@ function start(callback) {
         .use(middleware.lastMile());
 
     gHttpServer = http.createServer(proxyServer);
-    gHttpServer.listen(config.get('dockerProxyPort'), '0.0.0.0', callback);
+    gHttpServer.listen(constants.DOCKER_PROXY_PORT, '0.0.0.0', callback);
 
-    debug(`startDockerProxy: started proxy on port ${config.get('dockerProxyPort')}`);
+    debug(`startDockerProxy: started proxy on port ${constants.DOCKER_PROXY_PORT}`);
 
     gHttpServer.on('upgrade', function (req, client, head) {
         // Create a new tcp connection to the TCP server
@@ -150,7 +151,7 @@ function start(callback) {
             if (req.headers['content-type'] === 'application/json') {
                 // TODO we have to parse the immediate upgrade request body, but I don't know how
                 let plainBody = '{"Detach":false,"Tty":false}\r\n';
-                upgradeMessage += `Content-Type: application/json\r\n`;
+                upgradeMessage += 'Content-Type: application/json\r\n';
                 upgradeMessage += `Content-Length: ${Buffer.byteLength(plainBody)}\r\n`;
                 upgradeMessage += '\r\n';
                 upgradeMessage += plainBody;

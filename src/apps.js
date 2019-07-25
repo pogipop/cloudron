@@ -152,7 +152,7 @@ function validatePortBindings(portBindings, manifest) {
         config.get('port'), /* app server (lo) */
         constants.SYSADMIN_PORT, /* sysadmin app server (lo) */
         constants.INTERNAL_SMTP_PORT, /* internal smtp port (lo) */
-        config.get('ldapPort'), /* ldap server (lo) */
+        constants.LDAP_PORT,
         3306, /* mysql (lo) */
         4190, /* managesieve */
         8000, /* ESXi monitoring */

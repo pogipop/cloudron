@@ -9,7 +9,7 @@ var assert = require('assert'),
     appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     async = require('async'),
-    config = require('./config.js'),
+    constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:ldap'),
     eventlog = require('./eventlog.js'),
@@ -640,7 +640,7 @@ function start(callback) {
         res.end();
     });
 
-    gServer.listen(config.get('ldapPort'), '0.0.0.0', callback);
+    gServer.listen(constants.LDAP_PORT, '0.0.0.0', callback);
 }
 
 function stop(callback) {

@@ -38,6 +38,7 @@ var accesscontrol = require('./accesscontrol.js'),
     async = require('async'),
     clients = require('./clients.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     ClientsError = clients.ClientsError,
     crypto = require('crypto'),
     DatabaseError = require('./databaseerror.js'),
@@ -685,7 +686,7 @@ function getEnvironment(app, callback) {
     appdb.getAddonConfigByAppId(app.id, function (error, result) {
         if (error) return callback(error);
 
-        if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_HOST', value: `tcp://172.18.0.1:${config.get('dockerProxyPort')}` });
+        if (app.manifest.addons['docker']) result.push({ name: 'DOCKER_HOST', value: `tcp://172.18.0.1:${constants.DOCKER_PROXY_PORT}` });
 
         return callback(null, result.map(function (e) { return e.name + '=' + e.value; }));
     });
@@ -876,8 +877,8 @@ function setupLdap(app, options, callback) {
 
     var env = [
         { name: `${envPrefix}LDAP_SERVER`, value: '172.18.0.1' },
-        { name: `${envPrefix}LDAP_PORT`, value: '' + config.get('ldapPort') },
-        { name: `${envPrefix}LDAP_URL`, value: 'ldap://172.18.0.1:' + config.get('ldapPort') },
+        { name: `${envPrefix}LDAP_PORT`, value: '' + constants.LDAP_PORT },
+        { name: `${envPrefix}LDAP_URL`, value: 'ldap://172.18.0.1:' + constants.LDAP_PORT },
         { name: `${envPrefix}LDAP_USERS_BASE_DN`, value: 'ou=users,dc=cloudron' },
         { name: `${envPrefix}LDAP_GROUPS_BASE_DN`, value: 'ou=groups,dc=cloudron' },
         { name: `${envPrefix}LDAP_BIND_DN`, value: 'cn='+ app.id + ',ou=apps,dc=cloudron' },

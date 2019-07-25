@@ -6,12 +6,12 @@
 
 'use strict';
 
-var dockerProxy = require('../dockerproxy.js'),
-    config = require('../config.js'),
+var constants = require('../constants.js'),
+    dockerProxy = require('../dockerproxy.js'),
     exec = require('child_process').exec,
     expect = require('expect.js');
 
-const DOCKER = `docker -H tcp://localhost:${config.get('dockerProxyPort')} `;
+const DOCKER = `docker -H tcp://localhost:${constants.DOCKER_PROXY_PORT} `;
 
 describe('Dockerproxy', function () {
     var containerId;

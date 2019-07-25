@@ -23,6 +23,8 @@ exports = module.exports = {
 
     INTERNAL_SMTP_PORT: 2525, // this value comes from the mail container
     SYSADMIN_PORT: 3001,
+    LDAP_PORT: 3002,
+    DOCKER_PROXY_PORT: 3003,
 
     NGINX_DEFAULT_CONFIG_FILE_NAME: 'default.conf',
 
