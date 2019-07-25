@@ -5,7 +5,6 @@ exports = module.exports = {
 
     // values set here will be lost after a upgrade/update. use the sqlite database
     // for persistent values that need to be backed up
-    get: get,
     set: set,
 
     // ifdefs to check environment
