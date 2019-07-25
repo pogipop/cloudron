@@ -19,7 +19,6 @@ exports = module.exports = {
     setFqdn: setAdminDomain,
     setAdminDomain: setAdminDomain,
     setAdminFqdn: setAdminFqdn,
-    database: database,
 
     // these values are derived
     adminOrigin: adminOrigin,
@@ -83,21 +82,9 @@ function initConfig() {
     data.webServerOrigin = null;
     data.provider = 'generic';
 
-    // keep in sync with start.sh
-    data.database = {
-        hostname: '127.0.0.1',
-        username: 'root',
-        password: 'password',
-        port: 3306,
-        name: 'box'
-    };
-
     // overrides for local testings
     if (exports.TEST) {
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
-
-        // see setupTest script how the mysql-server is run
-        data.database.hostname = require('child_process').execSync('docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" mysql-server').toString().trim();
     }
 
     // overwrite defaults with saved config
@@ -158,10 +145,6 @@ function mailFqdn() {
 
 function adminOrigin() {
     return 'https://' + adminFqdn();
-}
-
-function database() {
-    return get('database');
 }
 
 function isDemo() {

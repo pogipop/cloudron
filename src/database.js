@@ -16,6 +16,7 @@ var assert = require('assert'),
     async = require('async'),
     child_process = require('child_process'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     mysql = require('mysql'),
     once = require('once'),
     util = require('util');
@@ -23,25 +24,38 @@ var assert = require('assert'),
 var gConnectionPool = null,
     gDefaultConnection = null;
 
+const gDatabase = {
+    hostname: '127.0.0.1',
+    username: 'root',
+    password: 'password',
+    port: 3306,
+    name: 'box'
+};
+
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     if (gConnectionPool !== null) return callback(null);
 
+    if (constants.TEST) {
+        // see setupTest script how the mysql-server is run
+        gDatabase.hostname = require('child_process').execSync('docker inspect -f "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}" mysql-server').toString().trim();
+    }
+
     gConnectionPool  = mysql.createPool({
         connectionLimit: 5, // this has to be > 1 since we store one connection as 'default'. the rest for transactions
-        host: config.database().hostname,
-        user: config.database().username,
-        password: config.database().password,
-        port: config.database().port,
-        database: config.database().name,
+        host: gDatabase.hostname,
+        user: gDatabase.username,
+        password: gDatabase.password,
+        port: gDatabase.port,
+        database: gDatabase.name,
         multipleStatements: false,
         ssl: false,
         timezone: 'Z' // mysql follows the SYSTEM timezone. on Cloudron, this is UTC
     });
 
     gConnectionPool.on('connection', function (connection) {
-        connection.query('USE ' + config.database().name);
+        connection.query('USE ' + gDatabase.name);
         connection.query('SET SESSION sql_mode = \'strict_all_tables\'');
     });
 
@@ -87,8 +101,8 @@ function clear(callback) {
     assert.strictEqual(typeof callback, 'function');
 
     var cmd = util.format('mysql --host="%s" --user="%s" --password="%s" -Nse "SHOW TABLES" %s | grep -v "^migrations$" | while read table; do mysql --host="%s" --user="%s" --password="%s" -e "SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE $table" %s; done',
-        config.database().hostname, config.database().username, config.database().password, config.database().name,
-        config.database().hostname, config.database().username, config.database().password, config.database().name);
+        gDatabase.hostname, gDatabase.username, gDatabase.password, gDatabase.name,
+        gDatabase.hostname, gDatabase.username, gDatabase.password, gDatabase.name);
 
     async.series([
         child_process.exec.bind(null, cmd),
@@ -178,7 +192,7 @@ function importFromFile(file, callback) {
     assert.strictEqual(typeof file, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = `/usr/bin/mysql -h "${config.database().hostname}" -u ${config.database().username} -p${config.database().password} ${config.database().name} < ${file}`;
+    var cmd = `/usr/bin/mysql -h "${gDatabase.hostname}" -u ${gDatabase.username} -p${gDatabase.password} ${gDatabase.name} < ${file}`;
 
     async.series([
         query.bind(null, 'CREATE DATABASE IF NOT EXISTS box'),
@@ -190,7 +204,7 @@ function exportToFile(file, callback) {
     assert.strictEqual(typeof file, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = `/usr/bin/mysqldump -h "${config.database().hostname}" -u root -p${config.database().password} --single-transaction --routines --triggers ${config.database().name} > "${file}"`;
+    var cmd = `/usr/bin/mysqldump -h "${gDatabase.hostname}" -u root -p${gDatabase.password} --single-transaction --routines --triggers ${gDatabase.name} > "${file}"`;
 
     child_process.exec(cmd, callback);
 }
