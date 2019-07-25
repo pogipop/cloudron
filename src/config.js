@@ -29,7 +29,6 @@ exports = module.exports = {
     sysadminOrigin: sysadminOrigin, // localhost routes
     adminFqdn: adminFqdn,
     mailFqdn: mailFqdn,
-    hasIPv6: hasIPv6,
 
     isDemo: isDemo,
 
@@ -194,10 +193,4 @@ function isDemo() {
 
 function provider() {
     return get('provider');
-}
-
-function hasIPv6() {
-    const IPV6_PROC_FILE = '/proc/net/if_inet6';
-    // on contabo, /proc/net/if_inet6 is an empty file. so just exists is not enough
-    return fs.existsSync(IPV6_PROC_FILE) && fs.readFileSync(IPV6_PROC_FILE, 'utf8').trim().length !== 0;
 }

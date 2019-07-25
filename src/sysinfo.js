@@ -3,12 +3,15 @@
 exports = module.exports = {
     SysInfoError: SysInfoError,
 
-    getPublicIp: getPublicIp
+    getPublicIp: getPublicIp,
+
+    hasIPv6: hasIPv6
 };
 
 var assert = require('assert'),
     config = require('./config.js'),
     ec2 = require('./sysinfo/ec2.js'),
+    fs = require('fs'),
     generic = require('./sysinfo/generic.js'),
     scaleway = require('./sysinfo/scaleway.js'),
     util = require('util');
@@ -55,4 +58,10 @@ function getPublicIp(callback) {
 
         api.getPublicIp(callback);
     });
+}
+
+function hasIPv6() {
+    const IPV6_PROC_FILE = '/proc/net/if_inet6';
+    // on contabo, /proc/net/if_inet6 is an empty file. so just exists is not enough
+    return fs.existsSync(IPV6_PROC_FILE) && fs.readFileSync(IPV6_PROC_FILE, 'utf8').trim().length !== 0;
 }
