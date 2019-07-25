@@ -30,7 +30,6 @@ console.log(' Version:                        ', constants.VERSION);
 console.log(' Admin Origin:                   ', config.adminOrigin());
 console.log(' Appstore API server origin:     ', config.apiServerOrigin());
 console.log(' Appstore Web server origin:     ', config.webServerOrigin());
-console.log(' SysAdmin Port:                  ', config.get('sysadminPort'));
 console.log(' LDAP Server Port:               ', config.get('ldapPort'));
 console.log(' Docker Proxy Port:              ', config.get('dockerProxyPort'));
 console.log();

@@ -7,6 +7,7 @@
 
 var async = require('async'),
     config = require('../../config.js'),
+    constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
     eventlog = require('../../eventlog.js'),
@@ -70,7 +71,7 @@ describe('Internal API', function () {
 
     describe('backup', function () {
         it('succeeds', function (done) {
-            superagent.post(config.sysadminOrigin() + '/api/v1/backup')
+            superagent.post(`http://127.0.0.1:${constants.SYSADMIN_PORT}/api/v1/backup`)
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(202);
 

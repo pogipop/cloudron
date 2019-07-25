@@ -21,6 +21,8 @@ exports = module.exports = {
 
     ADMIN_LOCATION: 'my',
 
+    SYSADMIN_PORT: 3001,
+
     NGINX_DEFAULT_CONFIG_FILE_NAME: 'default.conf',
 
     GHOST_USER_FILE: '/tmp/cloudron_ghost.json',

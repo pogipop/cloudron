@@ -25,7 +25,6 @@ exports = module.exports = {
     // these values are derived
     adminOrigin: adminOrigin,
     internalAdminOrigin: internalAdminOrigin,
-    sysadminOrigin: sysadminOrigin, // localhost routes
     adminFqdn: adminFqdn,
     mailFqdn: mailFqdn,
 
@@ -87,7 +86,6 @@ function initConfig() {
     data.webServerOrigin = null;
     data.provider = 'generic';
     data.smtpPort = 2525; // this value comes from mail container
-    data.sysadminPort = 3001;
     data.ldapPort = 3002;
     data.dockerProxyPort = 3003;
 
@@ -171,10 +169,6 @@ function adminOrigin() {
 
 function internalAdminOrigin() {
     return 'http://127.0.0.1:' + get('port');
-}
-
-function sysadminOrigin() {
-    return 'http://127.0.0.1:' + get('sysadminPort');
 }
 
 function database() {
