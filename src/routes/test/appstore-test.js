@@ -11,22 +11,18 @@ var async = require('async'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
-    path = require('path'),
-    safe = require('safetydance'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
 var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-var AUTHORIZED_KEYS_FILE = path.join(config.baseDir(), 'authorized_keys');
 var token = null;
 
 function setup(done) {
     nock.cleanAll();
     config._reset();
     config.setFqdn('example-ssh-test.com');
-    safe.fs.unlinkSync(AUTHORIZED_KEYS_FILE);
 
     async.series([
         server.start.bind(server),

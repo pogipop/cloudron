@@ -7,9 +7,7 @@
 
 var config = require('../config.js'),
     constants = require('../constants.js'),
-    expect = require('expect.js'),
-    fs = require('fs'),
-    path = require('path');
+    expect = require('expect.js');
 
 describe('config', function () {
     before(function () {
@@ -18,11 +16,6 @@ describe('config', function () {
 
     after(function () {
         config._reset();
-    });
-
-    it('baseDir() is set', function (done) {
-        expect(config.baseDir()).to.be.ok();
-        done();
     });
 
     it('can get version', function (done) {
@@ -34,12 +27,6 @@ describe('config', function () {
     it('did set default values', function () {
         expect(config.adminDomain()).to.equal('');
         expect(config.adminFqdn()).to.equal('');
-    });
-
-    it('set does not save custom values in file', function (done) {
-        config.set('foobar', 'somevalue');
-        expect(JSON.parse(fs.readFileSync(path.join(config.baseDir(), 'cloudron.conf'))).foobar).to.not.be.ok();
-        done();
     });
 
     it('set - simple key value', function (done) {

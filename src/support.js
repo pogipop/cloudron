@@ -12,11 +12,12 @@ let assert = require('assert'),
     shell = require('./shell.js'),
     once = require('once'),
     path = require('path'),
+    paths = require('./paths.js'),
     sysinfo = require('./sysinfo.js'),
     util = require('util');
 
 // the logic here is also used in the cloudron-support tool
-var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(config.baseDir(), 'authorized_keys') : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys'),
+var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(paths.baseDir(), 'authorized_keys') : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys'),
     AUTHORIZED_KEYS_USER = config.TEST ? process.getuid() : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? 'ubuntu' : 'root'),
     AUTHORIZED_KEYS_CMD = path.join(__dirname, 'scripts/remotesupport.sh');
 

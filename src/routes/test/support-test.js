@@ -12,6 +12,7 @@ var async = require('async'),
     expect = require('expect.js'),
     nock = require('nock'),
     path = require('path'),
+    paths = require('../../paths.js'),
     safe = require('safetydance'),
     settings = require('../../settings.js'),
     settingsdb = require('../../settingsdb.js'),
@@ -21,7 +22,7 @@ var async = require('async'),
 var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
-var AUTHORIZED_KEYS_FILE = path.join(config.baseDir(), 'authorized_keys');
+var AUTHORIZED_KEYS_FILE = path.join(paths.baseDir(), 'authorized_keys');
 var token = null;
 
 function setup(done) {
