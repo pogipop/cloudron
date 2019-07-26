@@ -171,6 +171,8 @@ mysql -u root -p${mysql_root_password} -e 'CREATE DATABASE IF NOT EXISTS box'
 echo "==> Migrating data"
 (cd "${BOX_SRC_DIR}" && BOX_ENV=cloudron DATABASE_URL=mysql://root:${mysql_root_password}@127.0.0.1/box "${BOX_SRC_DIR}/node_modules/.bin/db-migrate" up)
 
+rm -f /etc/cloudron/cloudron.conf
+
 if [[ ! -f "${BOX_DATA_DIR}/dhparams.pem" ]]; then
     echo "==> Generating dhparams (takes forever)"
     openssl dhparam -out "${BOX_DATA_DIR}/dhparams.pem" 2048
