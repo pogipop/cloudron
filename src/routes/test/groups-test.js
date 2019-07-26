@@ -8,7 +8,6 @@
 
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -28,9 +27,6 @@ var GROUP_NAME = 'externals';
 var groupObject, group1Object;
 
 function setup(done) {
-    config._reset();
-    config.setFqdn('example-groups-test.com');
-
     async.series([
         server.start.bind(server),
 
@@ -128,7 +124,7 @@ describe('Groups API', function () {
                 group1Object = result.body;
                 done();
             });
-    })
+    });
 
     it('cannot add user to invalid group', function (done) {
         superagent.put(SERVER_URL + '/api/v1/users/' + userId + '/groups')

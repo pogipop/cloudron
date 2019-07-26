@@ -8,13 +8,13 @@ var appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:dyndns'),
     domains = require('./domains.js'),
     eventlog = require('./eventlog.js'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     sysinfo = require('./sysinfo.js');
 
 // called for dynamic dns setups where we have to update the IP
@@ -33,7 +33,7 @@ function sync(auditSource, callback) {
 
         debug(`refreshDNS: updating ip from ${info.ip} to ${ip}`);
 
-        domains.upsertDnsRecords(constants.ADMIN_LOCATION, config.adminDomain(), 'A', [ ip ], function (error) {
+        domains.upsertDnsRecords(constants.ADMIN_LOCATION, settings.adminDomain(), 'A', [ ip ], function (error) {
             if (error) return callback(error);
 
             debug('refreshDNS: updated admin location');

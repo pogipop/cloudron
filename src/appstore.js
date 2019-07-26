@@ -27,7 +27,6 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     custom = require('./custom.js'),
     debug = require('debug')('box:appstore'),
@@ -99,7 +98,7 @@ function login(email, password, totpToken, callback) {
         totpToken: totpToken
     };
 
-    const url = config.apiServerOrigin() + '/api/v1/login';
+    const url = settings.apiServerOrigin() + '/api/v1/login';
     superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
         if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.ACCESS_DENIED));
@@ -119,7 +118,7 @@ function registerUser(email, password, callback) {
         password: password,
     };
 
-    const url = config.apiServerOrigin() + '/api/v1/register_user';
+    const url = settings.apiServerOrigin() + '/api/v1/register_user';
     superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
         if (result.statusCode === 409) return callback(new AppstoreError(AppstoreError.ALREADY_EXISTS));
@@ -135,7 +134,7 @@ function getSubscription(callback) {
     getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        const url = config.apiServerOrigin() + '/api/v1/subscription';
+        const url = settings.apiServerOrigin() + '/api/v1/subscription';
         superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
             if (result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
@@ -162,7 +161,7 @@ function purchaseApp(data, callback) {
     getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        const url = `${config.apiServerOrigin()}/api/v1/cloudronapps`;
+        const url = `${settings.apiServerOrigin()}/api/v1/cloudronapps`;
 
         superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
@@ -187,7 +186,7 @@ function unpurchaseApp(appId, data, callback) {
     getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        const url = `${config.apiServerOrigin()}/api/v1/cloudronapps/${appId}`;
+        const url = `${settings.apiServerOrigin()}/api/v1/cloudronapps/${appId}`;
 
         superagent.get(url).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
@@ -282,7 +281,7 @@ function sendAliveStatus(callback) {
 
         var data = {
             version: constants.VERSION,
-            adminFqdn: config.adminFqdn(),
+            adminFqdn: settings.adminFqdn(),
             provider: sysinfo.provider(),
             backendSettings: backendSettings,
             machine: {
@@ -297,7 +296,7 @@ function sendAliveStatus(callback) {
         getCloudronToken(function (error, token) {
             if (error) return callback(error);
 
-            const url = `${config.apiServerOrigin()}/api/v1/alive`;
+            const url = `${settings.apiServerOrigin()}/api/v1/alive`;
             superagent.post(url).send(data).query({ accessToken: token }).timeout(30 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
                 if (result.statusCode === 404) return callback(new AppstoreError(AppstoreError.NOT_FOUND));
@@ -317,7 +316,7 @@ function getBoxUpdate(callback) {
     getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        const url = `${config.apiServerOrigin()}/api/v1/boxupdate`;
+        const url = `${settings.apiServerOrigin()}/api/v1/boxupdate`;
 
         superagent.get(url).query({ accessToken: token, boxVersion: constants.VERSION }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
@@ -352,7 +351,7 @@ function getAppUpdate(app, callback) {
     getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        const url = `${config.apiServerOrigin()}/api/v1/appupdate`;
+        const url = `${settings.apiServerOrigin()}/api/v1/appupdate`;
 
         superagent.get(url).query({ accessToken: token, boxVersion: constants.VERSION, appId: app.appStoreId, appVersion: app.manifest.version }).timeout(10 * 1000).end(function (error, result) {
             if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error));
@@ -382,7 +381,7 @@ function registerCloudron(data, callback) {
     assert.strictEqual(typeof data, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    const url = `${config.apiServerOrigin()}/api/v1/register_cloudron`;
+    const url = `${settings.apiServerOrigin()}/api/v1/register_cloudron`;
 
     superagent.post(url).send(data).timeout(30 * 1000).end(function (error, result) {
         if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
@@ -438,7 +437,7 @@ function registerWithLoginCredentials(options, callback) {
             login(options.email, options.password, options.totpToken || '', function (error, result) {
                 if (error) return callback(error);
 
-                registerCloudron({ domain: config.adminDomain(), accessToken: result.accessToken }, callback);
+                registerCloudron({ domain: settings.adminDomain(), accessToken: result.accessToken }, callback);
             });
         });
     });
@@ -465,7 +464,7 @@ function createTicket(info, callback) {
             if (error) console.error('Unable to get app info', error);
             if (result) info.app = result;
 
-            let url = config.apiServerOrigin() + '/api/v1/ticket';
+            let url = settings.apiServerOrigin() + '/api/v1/ticket';
 
             info.supportEmail = custom.spec().support.email; // destination address for tickets
 
@@ -489,7 +488,7 @@ function getApps(callback) {
 
         settings.getUnstableAppsConfig(function (error, unstable) {
             if (error) return callback(new AppstoreError(AppstoreError.INTERNAL_ERROR, error));
-            const url = `${config.apiServerOrigin()}/api/v1/apps`;
+            const url = `${settings.apiServerOrigin()}/api/v1/apps`;
             superagent.get(url).query({ accessToken: token, boxVersion: constants.VERSION, unstable: unstable }).timeout(10 * 1000).end(function (error, result) {
                 if (error && !error.response) return callback(new AppstoreError(AppstoreError.EXTERNAL_ERROR, error.message));
                 if (result.statusCode === 403 || result.statusCode === 401) return callback(new AppstoreError(AppstoreError.INVALID_TOKEN));
@@ -511,7 +510,7 @@ function getAppVersion(appId, version, callback) {
     getCloudronToken(function (error, token) {
         if (error) return callback(error);
 
-        let url = `${config.apiServerOrigin()}/api/v1/apps/${appId}`;
+        let url = `${settings.apiServerOrigin()}/api/v1/apps/${appId}`;
         if (version !== 'latest') url += `/versions/${version}`;
 
         superagent.get(url).query({ accessToken: token }).timeout(10 * 1000).end(function (error, result) {

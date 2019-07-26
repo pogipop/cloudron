@@ -6,7 +6,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    config = require('../config.js'),
     superagent = require('superagent'),
     SysInfoError = require('../sysinfo.js').SysInfoError;
 
@@ -16,7 +15,7 @@ function getPublicIp(callback) {
     if (process.env.BOX_ENV === 'test') return callback(null, '127.0.0.1');
 
     async.retry({ times: 10, interval: 5000 }, function (callback) {
-        superagent.get(config.apiServerOrigin() + '/api/v1/helper/public_ip').timeout(30 * 1000).end(function (error, result) {
+        superagent.get('https://api.cloudron.io/api/v1/helper/public_ip').timeout(30 * 1000).end(function (error, result) {
             if (error || result.statusCode !== 200) {
                 console.error('Error getting IP', error);
                 return callback(new SysInfoError(SysInfoError.EXTERNAL_ERROR, 'Unable to detect IP. API server unreachable'));

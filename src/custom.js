@@ -1,7 +1,6 @@
 'use strict';
 
-let config = require('./config.js'),
-    debug = require('debug')('box:features'),
+let debug = require('debug')('box:custom'),
     lodash = require('lodash'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -32,8 +31,8 @@ const DEFAULT_SPEC = {
         remoteSupport: true,
         ticketFormBody:
             'Use this form to open support tickets. You can also write directly to [support@cloudron.io](mailto:support@cloudron.io).\n\n'
-            + `* [Knowledge Base & App Docs](${config.webServerOrigin()}/documentation/apps/?support_view)\n`
-            + `* [Custom App Packaging & API](${config.webServerOrigin()}/developer/packaging/?support_view)\n`
+            + '* [Knowledge Base & App Docs](https://cloudron.io/documentation/apps/?support_view)\n'
+            + '* [Custom App Packaging & API](https://cloudron.io/developer/packaging/?support_view)\n'
             + '* [Forum](https://forum.cloudron.io/)\n\n',
         submitTickets: true
     },

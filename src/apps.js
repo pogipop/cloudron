@@ -62,7 +62,6 @@ var appdb = require('./appdb.js'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = backups.BackupsError,
-    config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apps'),
@@ -81,6 +80,7 @@ var appdb = require('./appdb.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
     semver = require('semver'),
+    settings = require('./settings.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
     superagent = require('superagent'),
@@ -552,7 +552,7 @@ function downloadManifest(appStoreId, manifest, callback) {
 
     var parts = appStoreId.split('@');
 
-    var url = config.apiServerOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] ? '/versions/' + parts[1] : '');
+    var url = settings.apiServerOrigin() + '/api/v1/apps/' + parts[0] + (parts[1] ? '/versions/' + parts[1] : '');
 
     debug('downloading manifest from %s', url);
 

@@ -196,15 +196,9 @@ if [[ "${initBaseImage}" == "true" ]]; then
     echo ""
 fi
 
-# NOTE: this install script only supports 3.x and above
+# NOTE: this install script only supports 4.2 and above
 echo "=> Installing version ${version} (this takes some time) ..."
 mkdir -p /etc/cloudron
-cat > "/etc/cloudron/cloudron.conf" <<CONF_END
-{
-    "apiServerOrigin": "${apiServerOrigin}",
-    "webServerOrigin": "${webServerOrigin}"
-}
-CONF_END
 echo "${provider}" > /etc/cloudron/PROVIDER
 
 [[ -n "${license}" ]] && echo -n "$license" > /etc/cloudron/LICENSE
@@ -213,6 +207,9 @@ if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
     echo "Failed to install cloudron. See ${LOG_FILE} for details"
     exit 1
 fi
+
+mysql -uroot -ppassword -e "REPLACE INTO settings (name, value) VALUES ('api_server_origin', '${apiServerOrigin}');"
+mysql -uroot -ppassword -e "REPLACE INTO settings (name, value) VALUES ('web_server_origin', '${webServerOrigin}');"
 
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do

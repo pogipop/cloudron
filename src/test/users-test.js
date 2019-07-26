@@ -6,7 +6,6 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     constants = require('../constants.js'),
     expect = require('expect.js'),
@@ -18,6 +17,7 @@ var async = require('async'),
     mailboxdb = require('../mailboxdb.js'),
     maildb = require('../maildb.js'),
     mailer = require('../mailer.js'),
+    settings = require('../settings.js'),
     userdb = require('../userdb.js'),
     users = require('../users.js'),
     UsersError = users.UsersError;
@@ -33,11 +33,6 @@ var DISPLAY_NAME_NEW = 'Somone cares';
 var userObject = null;
 var NON_ADMIN_GROUP = 'members';
 var AUDIT_SOURCE = { ip: '1.2.3.4', userId: 'someuserid' };
-
-var USERNAME_1 = 'secondUser';
-var EMAIL_1 = 'second@user.com';
-var PASSWORD_1 = 'Sup2345$@strong';
-var DISPLAY_NAME_1 = 'Second User';
 
 const DOMAIN_0 = {
     domain: 'example.com',
@@ -70,15 +65,13 @@ function createOwner(done) {
 }
 
 function setup(done) {
-    config._reset();
-    config.setFqdn(DOMAIN_0.domain);
-
     mailer._mailQueue = [];
 
     async.series([
         database.initialize,
         database._clear,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
+        settings.setAdmin.bind(null, DOMAIN_0.domain, 'my.' + DOMAIN_0.domain),
         mail.addDomain.bind(null, DOMAIN_0.domain),
     ], done);
 }

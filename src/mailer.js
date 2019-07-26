@@ -24,7 +24,7 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    config = require('./config.js'),
+    constants = require('./constants.js'),
     custom = require('./custom.js'),
     debug = require('debug')('box:mailer'),
     docker = require('./docker.js').connection,
@@ -54,7 +54,7 @@ function getMailConfig(callback) {
 
         callback(null, {
             cloudronName: cloudronName,
-            notificationFrom: `"${cloudronName}" <no-reply@${config.adminDomain()}>`
+            notificationFrom: `"${cloudronName}" <no-reply@${settings.adminDomain()}>`
         });
     });
 }
@@ -86,7 +86,7 @@ function sendMail(mailOptions, callback) {
             host: mailServerIp,
             port: constants.INTERNAL_SMTP_PORT,
             auth: {
-                user: mailOptions.authUser || `no-reply@${config.adminDomain()}`,
+                user: mailOptions.authUser || `no-reply@${settings.adminDomain()}`,
                 pass: relayToken
             }
         }));
@@ -146,11 +146,11 @@ function sendInvite(user, invitor) {
 
         var templateData = {
             user: user,
-            webadminUrl: config.adminOrigin(),
-            setupLink: `${config.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
+            webadminUrl: settings.adminOrigin(),
+            setupLink: `${settings.adminOrigin()}/api/v1/session/account/setup.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
             invitor: invitor,
             cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            cloudronAvatarUrl: settings.adminOrigin() + '/api/v1/cloudron/avatar'
         };
 
         var templateDataText = JSON.parse(JSON.stringify(templateData));
@@ -183,7 +183,7 @@ function userAdded(mailTo, user) {
         var templateData = {
             user: user,
             cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            cloudronAvatarUrl: settings.adminOrigin() + '/api/v1/cloudron/avatar'
         };
 
         var templateDataText = JSON.parse(JSON.stringify(templateData));
@@ -233,9 +233,9 @@ function passwordReset(user) {
 
         var templateData = {
             user: user,
-            resetLink: `${config.adminOrigin()}/api/v1/session/password/reset.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
+            resetLink: `${settings.adminOrigin()}/api/v1/session/password/reset.html?reset_token=${user.resetToken}&email=${encodeURIComponent(user.email)}`,
             cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            cloudronAvatarUrl: settings.adminOrigin() + '/api/v1/cloudron/avatar'
         };
 
         var templateDataText = JSON.parse(JSON.stringify(templateData));
@@ -314,7 +314,7 @@ function appUpdated(mailTo, app, callback) {
             changelog: app.manifest.changelog,
             changelogHTML: converter.makeHtml(app.manifest.changelog),
             cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            cloudronAvatarUrl: settings.adminOrigin() + '/api/v1/cloudron/avatar'
         };
 
         var templateDataText = JSON.parse(JSON.stringify(templateData));
@@ -350,11 +350,11 @@ function appUpdatesAvailable(mailTo, apps, hasSubscription, callback) {
         });
 
         var templateData = {
-            webadminUrl: config.adminOrigin(),
+            webadminUrl: settings.adminOrigin(),
             hasSubscription: hasSubscription,
             apps: apps,
             cloudronName: mailConfig.cloudronName,
-            cloudronAvatarUrl: config.adminOrigin() + '/api/v1/cloudron/avatar'
+            cloudronAvatarUrl: settings.adminOrigin() + '/api/v1/cloudron/avatar'
         };
 
         var templateDataText = JSON.parse(JSON.stringify(templateData));

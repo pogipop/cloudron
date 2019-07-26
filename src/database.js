@@ -15,7 +15,6 @@ exports = module.exports = {
 var assert = require('assert'),
     async = require('async'),
     child_process = require('child_process'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     mysql = require('mysql'),
     once = require('once'),

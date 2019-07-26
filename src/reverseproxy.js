@@ -36,7 +36,6 @@ var acme2 = require('./cert/acme2.js'),
     assert = require('assert'),
     async = require('async'),
     caas = require('./cert/caas.js'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     crypto = require('crypto'),
     debug = require('debug')('box:reverseproxy'),
@@ -51,6 +50,7 @@ var acme2 = require('./cert/acme2.js'),
     paths = require('./paths.js'),
     rimraf = require('rimraf'),
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     sysinfo = require('./sysinfo.js'),
     users = require('./users.js'),
@@ -332,7 +332,7 @@ function notifyCertChanged(vhost, callback) {
     assert.strictEqual(typeof vhost, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (vhost !== config.mailFqdn()) return callback();
+    if (vhost !== settings.mailFqdn()) return callback();
 
     mail.handleCertChanged(callback);
 }
@@ -387,7 +387,7 @@ function writeAdminNginxConfig(bundle, configFileName, vhost, callback) {
 
     var data = {
         sourceDir: path.resolve(__dirname, '..'),
-        adminOrigin: config.adminOrigin(),
+        adminOrigin: settings.adminOrigin(),
         vhost: vhost, // if vhost is empty it will become the default_server
         hasIPv6: sysinfo.hasIPv6(),
         endpoint: 'admin',
@@ -450,7 +450,7 @@ function writeAppNginxConfig(app, bundle, callback) {
 
     var data = {
         sourceDir: sourceDir,
-        adminOrigin: config.adminOrigin(),
+        adminOrigin: settings.adminOrigin(),
         vhost: app.fqdn,
         hasIPv6: sysinfo.hasIPv6(),
         port: app.httpPort,
@@ -548,7 +548,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
         var appDomains = [];
 
         // add webadmin domain
-        appDomains.push({ domain: config.adminDomain(), fqdn: config.adminFqdn(), type: 'webadmin', nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, `${config.adminFqdn()}.conf`) });
+        appDomains.push({ domain: settings.adminDomain(), fqdn: settings.adminFqdn(), type: 'webadmin', nginxConfigFilename: path.join(paths.NGINX_APPCONFIG_DIR, `${settings.adminFqdn()}.conf`) });
 
         // add app main
         allApps.forEach(function (app) {
@@ -578,7 +578,7 @@ function renewCerts(options, auditSource, progressCallback, callback) {
 
                 // reconfigure since the cert changed
                 var configureFunc;
-                if (appDomain.type === 'webadmin') configureFunc = writeAdminNginxConfig.bind(null, bundle, `${config.adminFqdn()}.conf`, config.adminFqdn());
+                if (appDomain.type === 'webadmin') configureFunc = writeAdminNginxConfig.bind(null, bundle, `${settings.adminFqdn()}.conf`, settings.adminFqdn());
                 else if (appDomain.type === 'main') configureFunc = writeAppNginxConfig.bind(null, appDomain.app, bundle);
                 else if (appDomain.type === 'alternate') configureFunc = writeAppRedirectNginxConfig.bind(null, appDomain.app, appDomain.fqdn, bundle);
                 else return iteratorCallback(new Error(`Unknown domain type for ${appDomain.fqdn}. This should never happen`));

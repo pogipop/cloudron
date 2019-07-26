@@ -7,13 +7,13 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     mail = require('../mail.js'),
     maildb = require('../maildb.js'),
-    nock = require('nock');
+    nock = require('nock'),
+    settings = require('../settings.js');
 
 const DOMAIN_0 = {
     domain: 'example.com',
@@ -29,14 +29,11 @@ const AUDIT_SOURCE = {
 };
 
 function setup(done) {
-    config._reset();
-    config.set('fqdn', 'example.com');
-    config.set('provider', 'digitalocean');
-
     async.series([
         database.initialize,
         database._clear,
         domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
+        settings.setAdmin.bind(null, DOMAIN_0.domain, 'my.' + DOMAIN_0.domain),
         mail.addDomain.bind(null, DOMAIN_0.domain)
     ], done);
 }

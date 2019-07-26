@@ -41,6 +41,20 @@ exports = module.exports = {
 
     getAll: getAll,
 
+    initCache: initCache,
+
+    // these values come from the cache
+    apiServerOrigin: apiServerOrigin,
+    webServerOrigin: webServerOrigin,
+    adminDomain: adminDomain,
+    setAdmin: setAdmin,
+    // these values are derived
+    adminOrigin: adminOrigin,
+    adminFqdn: adminFqdn,
+    mailFqdn: mailFqdn,
+
+    isDemo: isDemo,
+
     // booleans. if you add an entry here, be sure to fix getAll
     DYNAMIC_DNS_KEY: 'dynamic_dns',
     UNSTABLE_APPS_KEY: 'unstable_apps',
@@ -67,6 +81,9 @@ exports = module.exports = {
 
     // blobs
     CLOUDRON_AVATAR_KEY: 'cloudron_avatar', // not stored in db but can be used for locked flag
+
+    // testing
+    _setApiServerOrigin: setApiServerOrigin
 };
 
 var addons = require('./addons.js'),
@@ -77,6 +94,7 @@ var addons = require('./addons.js'),
     cron = require('./cron.js'),
     CronJob = require('cron').CronJob,
     DatabaseError = require('./databaseerror.js'),
+    debug = require('debug')('box:settings'),
     moment = require('moment-timezone'),
     paths = require('./paths.js'),
     safe = require('safetydance'),
@@ -84,7 +102,7 @@ var addons = require('./addons.js'),
     util = require('util'),
     _ = require('underscore');
 
-var gDefaults = (function () {
+let gDefaults = (function () {
     var result = { };
     result[exports.APP_AUTOUPDATE_PATTERN_KEY] = '00 30 1,3,5,23 * * *';
     result[exports.BOX_AUTOUPDATE_PATTERN_KEY] = '00 00 1,3,5,23 * * *';
@@ -104,9 +122,16 @@ var gDefaults = (function () {
         intervalSecs: 24 * 60 * 60 // ~1 day
     };
     result[exports.PLATFORM_CONFIG_KEY] = {};
+    result[exports.ADMIN_DOMAIN_KEY] = '';
+    result[exports.ADMIN_FQDN_KEY] = '';
+    result[exports.API_SERVER_ORIGIN_KEY] = 'https://api.cloudron.io';
+    result[exports.WEB_SERVER_ORIGIN_KEY] = 'https://cloudron.io';
+    result[exports.DEMO_KEY] = false;
 
     return result;
 })();
+
+let gCache = {};
 
 function SettingsError(reason, errorOrMessage) {
     assert.strictEqual(typeof reason, 'string');
@@ -483,3 +508,63 @@ function getAll(callback) {
         callback(null, result);
     });
 }
+
+function initCache(callback) {
+    debug('initCache: pre-load settings');
+
+    getAll(function (error, allSettings) {
+        if (error) return callback(error);
+
+        gCache = {
+            apiServerOrigin: allSettings[exports.API_SERVER_ORIGIN_KEY],
+            webServerOrigin: allSettings[exports.WEB_SERVER_ORIGIN_KEY],
+            adminDomain: allSettings[exports.ADMIN_DOMAIN_KEY],
+            adminFqdn: allSettings[exports.ADMIN_FQDN_KEY],
+            isDemo: allSettings[exports.DEMO_KEY]
+        };
+
+        callback();
+    });
+}
+
+// this is together so we can do this in a transaction later
+function setAdmin(adminDomain, adminFqdn, callback) {
+    assert.strictEqual(typeof adminDomain, 'string');
+    assert.strictEqual(typeof adminFqdn, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.ADMIN_DOMAIN_KEY, adminDomain, function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        settingsdb.set(exports.ADMIN_FQDN_KEY, adminFqdn, function (error) {
+            if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+            gCache.adminDomain = adminDomain;
+            gCache.adminFqdn = adminFqdn;
+
+            callback(null);
+        });
+    });
+}
+
+function setApiServerOrigin(origin, callback) {
+    assert.strictEqual(typeof origin, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    settingsdb.set(exports.API_SERVER_ORIGIN_KEY, origin, function (error) {
+        if (error) return callback(new SettingsError(SettingsError.INTERNAL_ERROR, error));
+
+        gCache.apiServerOrigin = origin;
+        notifyChange(exports.API_SERVER_ORIGIN_KEY, origin);
+
+        callback(null);
+    });
+}
+
+function apiServerOrigin() { return gCache.apiServerOrigin; }
+function webServerOrigin() { return gCache.webServerOrigin; }
+function adminDomain() { return gCache.adminDomain; }
+function adminFqdn() { return gCache.adminFqdn; }
+function isDemo() { return gCache.isDemo; }
+function mailFqdn() { return adminFqdn(); }
+function adminOrigin() { return 'https://' + adminFqdn(); }

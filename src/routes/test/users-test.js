@@ -7,7 +7,6 @@
 
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
@@ -43,8 +42,6 @@ const USERNAME_4 = 'importedUser', EMAIL_4 = 'import@external.com';
 var groupObject;
 
 function setup(done) {
-    config._reset();
-
     mailer._mailQueue = [];
 
     async.series([

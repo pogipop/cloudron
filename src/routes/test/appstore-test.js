@@ -6,11 +6,11 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
+    settings = require('../../settings.js'),
     superagent = require('superagent'),
     server = require('../../server.js');
 
@@ -21,13 +21,14 @@ var token = null;
 
 function setup(done) {
     nock.cleanAll();
-    config._reset();
-    config.setFqdn('example-ssh-test.com');
 
     async.series([
         server.start.bind(server),
 
         database._clear,
+
+        settings._setApiServerOrigin.bind(null, 'http://localhost:6060'),
+        settings.setAdmin.bind(null, 'appstore-test.example.com', 'my.appstore-test.example.com'),
 
         function createAdmin(callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/activate')
@@ -49,8 +50,6 @@ function setup(done) {
 function cleanup(done) {
     database._clear(function (error) {
         expect(error).to.not.be.ok();
-
-        config._reset();
 
         server.stop(done);
     });
@@ -79,11 +78,11 @@ describe('Appstore Apps API', function () {
     });
 
     it('register cloudron', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .post('/api/v1/login', (body) => body.email && body.password)
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
 
-        var scope2 = nock(config.apiServerOrigin())
+        var scope2 = nock(settings.apiServerOrigin())
             .post('/api/v1/register_cloudron', (body) => !!body.domain && body.accessToken === 'SECRET_TOKEN')
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
@@ -99,7 +98,7 @@ describe('Appstore Apps API', function () {
     });
 
     it('can list apps', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .get(`/api/v1/apps?accessToken=CLOUDRON_TOKEN&boxVersion=${constants.VERSION}&unstable=false`, () => true)
             .reply(200, { apps: [] });
 
@@ -113,7 +112,7 @@ describe('Appstore Apps API', function () {
     });
 
     it('can get app', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .get('/api/v1/apps/org.wordpress.cloudronapp?accessToken=CLOUDRON_TOKEN', () => true)
             .reply(200, { apps: [] });
 
@@ -127,7 +126,7 @@ describe('Appstore Apps API', function () {
     });
 
     it('can get app version', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .get('/api/v1/apps/org.wordpress.cloudronapp/versions/3.4.2?accessToken=CLOUDRON_TOKEN', () => true)
             .reply(200, { apps: [] });
 
@@ -147,11 +146,11 @@ describe('Subscription API - no signup', function () {
     after(cleanup);
 
     it('can setup subscription', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .post('/api/v1/login', (body) => body.email && body.password)
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
 
-        var scope2 = nock(config.apiServerOrigin())
+        var scope2 = nock(settings.apiServerOrigin())
             .post('/api/v1/register_cloudron', (body) => !!body.domain && body.accessToken === 'SECRET_TOKEN')
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
@@ -182,15 +181,15 @@ describe('Subscription API - signup', function () {
     after(cleanup);
 
     it('can setup subscription', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .post('/api/v1/register_user', (body) => body.email && body.password)
             .reply(201, { });
 
-        var scope2 = nock(config.apiServerOrigin())
+        var scope2 = nock(settings.apiServerOrigin())
             .post('/api/v1/login', (body) => body.email && body.password)
             .reply(200, { userId: 'userId', accessToken: 'SECRET_TOKEN' });
 
-        var scope3 = nock(config.apiServerOrigin())
+        var scope3 = nock(settings.apiServerOrigin())
             .post('/api/v1/register_cloudron', (body) => !!body.domain && body.accessToken === 'SECRET_TOKEN')
             .reply(201, { cloudronId: 'cid', cloudronToken: 'CLOUDRON_TOKEN', licenseKey: 'lkey' });
 
@@ -207,7 +206,7 @@ describe('Subscription API - signup', function () {
     });
 
     it('can get subscription', function (done) {
-        var scope1 = nock(config.apiServerOrigin())
+        var scope1 = nock(settings.apiServerOrigin())
             .get('/api/v1/subscription?accessToken=CLOUDRON_TOKEN', () => true)
             .reply(200, { subscription: { plan: { id: 'free' } }, email: 'test@cloudron.io' });
 

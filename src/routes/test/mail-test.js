@@ -6,13 +6,13 @@
 /* global after:false */
 
 var async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
     mail = require('../../mail.js'),
     maildb = require('../../maildb.js'),
     server = require('../../server.js'),
+    settings = require('../../settings.js'),
     superagent = require('superagent'),
     userdb = require('../../userdb.js'),
     _ = require('underscore');
@@ -42,8 +42,6 @@ var token = null;
 var userId = '';
 
 function setup(done) {
-    config._reset();
-
     async.series([
         server.start.bind(null),
         database._clear.bind(null),
@@ -311,7 +309,7 @@ describe('Mail API', function () {
                     expect(res.body.dns.spf.domain).to.eql(spfDomain);
                     expect(res.body.dns.spf.type).to.eql('TXT');
                     expect(res.body.dns.spf.value).to.eql(null);
-                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + settings.adminFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(false);
 
                     expect(res.body.dns.dmarc).to.be.an('object');
@@ -323,13 +321,13 @@ describe('Mail API', function () {
                     expect(res.body.dns.mx).to.be.an('object');
                     expect(res.body.dns.mx.type).to.eql('MX');
                     expect(res.body.dns.mx.value).to.eql(null);
-                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + settings.mailFqdn() + '.');
                     expect(res.body.dns.mx.status).to.eql(false);
 
                     expect(res.body.dns.ptr).to.be.an('object');
                     expect(res.body.dns.ptr.type).to.eql('PTR');
                     // expect(res.body.ptr.value).to.eql(null); this will be anything random
-                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
+                    expect(res.body.dns.ptr.expected).to.eql(settings.mailFqdn());
                     expect(res.body.dns.ptr.status).to.eql(false);
 
                     done();
@@ -350,7 +348,7 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
 
                     expect(res.body.dns.spf).to.be.an('object');
-                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + settings.adminFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(false);
                     expect(res.body.dns.spf.value).to.eql(null);
 
@@ -366,11 +364,11 @@ describe('Mail API', function () {
 
                     expect(res.body.dns.mx).to.be.an('object');
                     expect(res.body.dns.mx.status).to.eql(false);
-                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + settings.mailFqdn() + '.');
                     expect(res.body.dns.mx.value).to.eql(null);
 
                     expect(res.body.dns.ptr).to.be.an('object');
-                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
+                    expect(res.body.dns.ptr.expected).to.eql(settings.mailFqdn());
                     expect(res.body.dns.ptr.status).to.eql(false);
                     // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
@@ -381,7 +379,7 @@ describe('Mail API', function () {
         it('succeeds with all different spf, dkim, dmarc, mx, ptr records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: config.mailFqdn() }, { priority: '30', exchange: config.mailFqdn() } ];
+            dnsAnswerQueue[mxDomain].MX = [ { priority: '20', exchange: settings.mailFqdn() }, { priority: '30', exchange: settings.mailFqdn() } ];
             dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC2; p=reject; pct=100']];
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM2; t=s; p=' + mail._readDkimPublicKeySync(DOMAIN_0.domain)]];
             dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:random.com ~all']];
@@ -392,7 +390,7 @@ describe('Mail API', function () {
                     expect(res.statusCode).to.equal(200);
 
                     expect(res.body.dns.spf).to.be.an('object');
-                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' a:random.com ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + settings.adminFqdn() + ' a:random.com ~all');
                     expect(res.body.dns.spf.status).to.eql(false);
                     expect(res.body.dns.spf.value).to.eql('v=spf1 a:random.com ~all');
 
@@ -408,11 +406,11 @@ describe('Mail API', function () {
 
                     expect(res.body.dns.mx).to.be.an('object');
                     expect(res.body.dns.mx.status).to.eql(false);
-                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
-                    expect(res.body.dns.mx.value).to.eql('20 ' + config.mailFqdn() + '. 30 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + settings.mailFqdn() + '.');
+                    expect(res.body.dns.mx.value).to.eql('20 ' + settings.mailFqdn() + '. 30 ' + settings.mailFqdn() + '.');
 
                     expect(res.body.dns.ptr).to.be.an('object');
-                    expect(res.body.dns.ptr.expected).to.eql(config.mailFqdn());
+                    expect(res.body.dns.ptr.expected).to.eql(settings.mailFqdn());
                     expect(res.body.dns.ptr.status).to.eql(false);
                     // expect(res.body.ptr.value).to.eql(null); this will be anything random
 
@@ -425,7 +423,7 @@ describe('Mail API', function () {
         it('succeeds with existing embedded spf', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all']];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:example.com a:' + settings.mailFqdn() + ' ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/status')
                 .query({ access_token: token })
@@ -435,8 +433,8 @@ describe('Mail API', function () {
                     expect(res.body.dns.spf).to.be.an('object');
                     expect(res.body.dns.spf.domain).to.eql(spfDomain);
                     expect(res.body.dns.spf.type).to.eql('TXT');
-                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
-                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:example.com a:' + config.mailFqdn() + ' ~all');
+                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:example.com a:' + settings.mailFqdn() + ' ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:example.com a:' + settings.mailFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(true);
 
                     done();
@@ -465,10 +463,10 @@ describe('Mail API', function () {
         it('succeeds with all correct records', function (done) {
             clearDnsAnswerQueue();
 
-            dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: config.mailFqdn() } ];
+            dnsAnswerQueue[mxDomain].MX = [ { priority: '10', exchange: settings.mailFqdn() } ];
             dnsAnswerQueue[dmarcDomain].TXT = [['v=DMARC1; p=reject; pct=100']];
             dnsAnswerQueue[dkimDomain].TXT = [['v=DKIM1; t=s; p=', mail._readDkimPublicKeySync(DOMAIN_0.domain) ]];
-            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:' + config.adminFqdn() + ' ~all']];
+            dnsAnswerQueue[spfDomain].TXT = [['v=spf1 a:' + settings.adminFqdn() + ' ~all']];
 
             superagent.get(SERVER_URL + '/api/v1/mail/' + DOMAIN_0.domain + '/status')
                 .query({ access_token: token })
@@ -485,8 +483,8 @@ describe('Mail API', function () {
                     expect(res.body.dns.spf).to.be.an('object');
                     expect(res.body.dns.spf.domain).to.eql(spfDomain);
                     expect(res.body.dns.spf.type).to.eql('TXT');
-                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
-                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + config.adminFqdn() + ' ~all');
+                    expect(res.body.dns.spf.value).to.eql('v=spf1 a:' + settings.adminFqdn() + ' ~all');
+                    expect(res.body.dns.spf.expected).to.eql('v=spf1 a:' + settings.adminFqdn() + ' ~all');
                     expect(res.body.dns.spf.status).to.eql(true);
 
                     expect(res.body.dns.dmarc).to.be.an('object');
@@ -496,8 +494,8 @@ describe('Mail API', function () {
 
                     expect(res.body.dns.mx).to.be.an('object');
                     expect(res.body.dns.mx.status).to.eql(true);
-                    expect(res.body.dns.mx.expected).to.eql('10 ' + config.mailFqdn() + '.');
-                    expect(res.body.dns.mx.value).to.eql('10 ' + config.mailFqdn() + '.');
+                    expect(res.body.dns.mx.expected).to.eql('10 ' + settings.mailFqdn() + '.');
+                    expect(res.body.dns.mx.value).to.eql('10 ' + settings.mailFqdn() + '.');
 
                     done();
                 });

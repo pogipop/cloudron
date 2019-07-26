@@ -19,6 +19,7 @@ var accesscontrol = require('./accesscontrol.js'),
     passport = require('passport'),
     path = require('path'),
     routes = require('./routes/index.js'),
+    settings = require('./settings.js'),
     ws = require('ws');
 
 var gHttpServer = null;
@@ -367,6 +368,7 @@ function start(callback) {
     async.series([
         routes.accesscontrol.initialize,  // hooks up authentication strategies into passport
         database.initialize,
+        settings.initCache, // pre-load very often used settings
         cloudron.initialize,
         gHttpServer.listen.bind(gHttpServer, constants.PORT, '127.0.0.1'),
         gSysadminHttpServer.listen.bind(gSysadminHttpServer, constants.SYSADMIN_PORT, '127.0.0.1'),

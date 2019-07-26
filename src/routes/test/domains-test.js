@@ -7,7 +7,6 @@
 
 var async = require('async'),
     child_process = require('child_process'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     domaindb = require('../../domaindb.js'),
@@ -23,7 +22,6 @@ var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
-var DOMAIN = 'example-domains-test.com';
 
 var DOMAIN_0 = {
     domain: 'cloudron.com',
@@ -46,9 +44,6 @@ var DOMAIN_1 = {
 
 describe('Domains API', function () {
     before(function (done) {
-        config._reset();
-        config.setFqdn(DOMAIN);
-
         async.series([
             server.start.bind(null),
             database._clear.bind(null),

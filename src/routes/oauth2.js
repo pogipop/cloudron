@@ -24,7 +24,6 @@ var apps = require('../apps.js'),
     authcodedb = require('../authcodedb.js'),
     clients = require('../clients'),
     ClientsError = clients.ClientsError,
-    config = require('../config.js'),
     constants = require('../constants.js'),
     DatabaseError = require('../databaseerror.js'),
     debug = require('debug')('box:routes/oauth2'),
@@ -154,7 +153,7 @@ function renderTemplate(res, template, data) {
 
         // amend template properties, for example used in the header
         data.title = data.title || 'Cloudron';
-        data.adminOrigin = config.adminOrigin();
+        data.adminOrigin = settings.adminOrigin();
         data.cloudronName = cloudronName;
 
         res.render(template, data);
@@ -214,8 +213,8 @@ function loginForm(req, res) {
             applicationName: applicationName,
             applicationLogo: applicationLogo,
             error: error,
-            username: config.isDemo() ? constants.DEMO_USERNAME : '',
-            password: config.isDemo() ? 'cloudron' : '',
+            username: settings.isDemo() ? constants.DEMO_USERNAME : '',
+            password: settings.isDemo() ? 'cloudron' : '',
             title: applicationName + ' Login'
         });
     }
@@ -373,7 +372,7 @@ function accountSetup(req, res, next) {
                 clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
                     if (error) return next(new HttpError(500, error));
 
-                    res.redirect(`${config.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
+                    res.redirect(`${settings.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
                 });
             });
         });
@@ -421,7 +420,7 @@ function passwordReset(req, res, next) {
             clients.addTokenByUserId('cid-webadmin', userObject.id, Date.now() + constants.DEFAULT_TOKEN_EXPIRATION, {}, function (error, result) {
                 if (error) return next(new HttpError(500, error));
 
-                res.redirect(`${config.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
+                res.redirect(`${settings.adminOrigin()}?accessToken=${result.accessToken}&expiresAt=${result.expires}`);
             });
         });
     });

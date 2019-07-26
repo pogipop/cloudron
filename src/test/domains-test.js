@@ -6,19 +6,18 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
+    settings = require('../settings.js'),
     _ = require('underscore');
 
 describe('Domains', function () {
     before(function (done) {
-        config._reset();
-
         async.series([
             database.initialize,
-            database._clear
+            database._clear,
+            settings.setAdmin.bind(null, 'example.com', 'my.example.com')
         ], done);
     });
 
@@ -37,9 +36,6 @@ describe('Domains', function () {
         };
 
         it('does not allow admin subdomain', function () {
-            config.setFqdn('example.com');
-            config.setAdminFqdn('my.example.com');
-
             expect(domains.validateHostname('my', domain)).to.be.an(Error);
         });
 

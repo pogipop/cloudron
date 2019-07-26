@@ -6,29 +6,15 @@
 
 'use strict';
 
-var config = require('../config.js'),
-    constants = require('../constants.js'),
+var constants = require('../constants.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     superagent = require('superagent'),
     server = require('../server.js');
 
 var SERVER_URL = 'http://localhost:' + constants.PORT;
-var DOMAIN = 'example-server-test.com';
-
-function cleanup(done) {
-    done();
-}
 
 describe('Server', function () {
-    before(function () {
-        config._reset();
-        config.setFqdn(DOMAIN);
-        config.set('provider', 'digitalocean');
-    });
-
-    after(cleanup);
-
     describe('startup', function () {
         it('start fails due to wrong arguments', function (done) {
             expect(function () { server.start(); }).to.throwException();
@@ -158,7 +144,7 @@ describe('Server', function () {
         });
 
         it('is not reachable anymore', function (done) {
-            superagent.get(SERVER_URL + '/api/v1/cloudron/status', function (error, result) {
+            superagent.get(SERVER_URL + '/api/v1/cloudron/status', function (error) {
                 expect(error).to.not.be(null);
                 expect(!error.response).to.be.ok();
                 done();

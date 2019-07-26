@@ -10,7 +10,6 @@ var appdb = require('../appdb.js'),
     apps = require('../apps.js'),
     assert = require('assert'),
     async = require('async'),
-    config = require('../config.js'),
     constants = require('../constants.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
@@ -93,8 +92,6 @@ function startDockerProxy(interceptor, callback) {
 }
 
 function setup(done) {
-    config._reset();
-
     async.series([
         database.initialize.bind(null),
         database._clear.bind(null),

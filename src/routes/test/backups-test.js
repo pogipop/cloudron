@@ -7,7 +7,6 @@
 
 var appdb = require('../../appdb.js'),
     async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
@@ -36,7 +35,6 @@ var token = null;
 
 function setup(done) {
     nock.cleanAll();
-    config._reset();
 
     async.series([
         server.start,

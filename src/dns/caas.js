@@ -11,10 +11,10 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    config = require('../config.js'),
     debug = require('debug')('box:dns/caas'),
     domains = require('../domains.js'),
     DomainsError = require('../domains.js').DomainsError,
+    settings = require('../settings.js'),
     superagent = require('superagent'),
     util = require('util'),
     waitForDns = require('./waitfordns.js');
@@ -58,7 +58,7 @@ function upsert(domainObject, location, type, values, callback) {
     };
 
     superagent
-        .post(config.apiServerOrigin() + '/api/v1/caas/domains/' + fqdn)
+        .post(settings.apiServerOrigin() + '/api/v1/caas/domains/' + fqdn)
         .query({ token: dnsConfig.token })
         .send(data)
         .timeout(30 * 1000)
@@ -84,7 +84,7 @@ function get(domainObject, location, type, callback) {
     debug('get: zoneName: %s subdomain: %s type: %s fqdn: %s', domainObject.domain, location, type, fqdn);
 
     superagent
-        .get(config.apiServerOrigin() + '/api/v1/caas/domains/' + fqdn)
+        .get(settings.apiServerOrigin() + '/api/v1/caas/domains/' + fqdn)
         .query({ token: dnsConfig.token, type: type })
         .timeout(30 * 1000)
         .end(function (error, result) {
@@ -111,7 +111,7 @@ function del(domainObject, location, type, values, callback) {
     };
 
     superagent
-        .del(config.apiServerOrigin() + '/api/v1/caas/domains/' + getFqdn(location, domainObject.domain))
+        .del(settings.apiServerOrigin() + '/api/v1/caas/domains/' + getFqdn(location, domainObject.domain))
         .query({ token: dnsConfig.token })
         .send(data)
         .timeout(30 * 1000)

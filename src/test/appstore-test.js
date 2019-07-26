@@ -10,27 +10,27 @@
 var async = require('async'),
     appstore = require('../appstore.js'),
     AppstoreError = appstore.AppstoreError,
-    config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     nock = require('nock'),
     settings = require('../settings.js'),
     settingsdb = require('../settingsdb.js');
 
-const DOMAIN = 'example-appstore-test.com';
+const ADMIN_DOMAIN = 'appstore-test.example.com';
 const APPSTORE_TOKEN = 'appstoretoken';
 const CLOUDRON_ID = 'cloudronid';
 const APP_ID = 'appid';
 const APPSTORE_APP_ID = 'appstoreappid';
+const MOCK_API_SERVER_ORIGIN = 'http://localhost:6060';
 
 function setup(done) {
     nock.cleanAll();
-    config.setFqdn(DOMAIN);
-    config.setAdminFqdn('my.' + DOMAIN);
 
     async.series([
         database.initialize,
-        database._clear
+        database._clear,
+        settings._setApiServerOrigin.bind(null, MOCK_API_SERVER_ORIGIN),
+        settings.setAdmin.bind(null, ADMIN_DOMAIN, 'my.' + ADMIN_DOMAIN),
     ], done);
 }
 
@@ -62,7 +62,7 @@ describe('Appstore', function () {
     });
 
     it('can send alive status', function (done) {
-        var scope = nock('http://localhost:6060')
+        var scope = nock(MOCK_API_SERVER_ORIGIN)
             .post(`/api/v1/alive?accessToken=${APPSTORE_TOKEN}`, function (body) {
                 expect(body.version).to.be.a('string');
                 expect(body.adminFqdn).to.be.a('string');
@@ -101,7 +101,7 @@ describe('Appstore', function () {
     });
 
     it('can purchase an app', function (done) {
-        var scope1 = nock('http://localhost:6060')
+        var scope1 = nock(MOCK_API_SERVER_ORIGIN)
             .post(`/api/v1/cloudronapps?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(201, {});
 
@@ -114,11 +114,11 @@ describe('Appstore', function () {
     });
 
     it('unpurchase succeeds if app was never purchased', function (done) {
-        var scope1 = nock('http://localhost:6060')
+        var scope1 = nock(MOCK_API_SERVER_ORIGIN)
             .get(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
             .reply(404, {});
 
-        var scope2 = nock('http://localhost:6060')
+        var scope2 = nock(MOCK_API_SERVER_ORIGIN)
             .delete(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(204, {});
 
@@ -132,11 +132,11 @@ describe('Appstore', function () {
     });
 
     it('can unpurchase an app', function (done) {
-        var scope1 = nock('http://localhost:6060')
+        var scope1 = nock(MOCK_API_SERVER_ORIGIN)
             .get(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`)
             .reply(200, {});
 
-        var scope2 = nock('http://localhost:6060')
+        var scope2 = nock(MOCK_API_SERVER_ORIGIN)
             .delete(`/api/v1/cloudronapps/${APP_ID}?accessToken=${APPSTORE_TOKEN}`, function () { return true; })
             .reply(204, {});
 

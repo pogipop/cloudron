@@ -7,7 +7,6 @@
 /* global after:false */
 
 var async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -20,9 +19,6 @@ var SERVER_URL = 'http://localhost:' + constants.PORT;
 var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 
 function setup(done) {
-    config._reset();
-    config.setFqdn('example-developer-test.com');
-
     async.series([
         server.start.bind(server),
         database._clear
@@ -180,7 +176,7 @@ describe('Developer API', function () {
             async.series([
                 setup,
                 function (callback) {
-                    superagent.post(`${SERVER_URL}/api/v1/cloudron/activate`).query({ setupToken: 'somesetuptoken' }).send({ username: USERNAME, password: PASSWORD, email: EMAIL }).end(function (error, result) {
+                    superagent.post(`${SERVER_URL}/api/v1/cloudron/activate`).query({ setupToken: 'somesetuptoken' }).send({ username: USERNAME, password: PASSWORD, email: EMAIL }).end(function (error) {
                         callback(error);
                     });
                 },
@@ -202,7 +198,7 @@ describe('Developer API', function () {
                         encoding: 'base32'
                     });
 
-                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
+                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error) {
                         callback(error);
                     });
                 }
@@ -212,7 +208,7 @@ describe('Developer API', function () {
         after(function (done) {
             async.series([
                 function (callback) {
-                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/disable`).query({ access_token: accessToken }).send({ password: PASSWORD }).end(function (error, result) {
+                    superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/disable`).query({ access_token: accessToken }).send({ password: PASSWORD }).end(function (error) {
                         callback(error);
                     });
                 },

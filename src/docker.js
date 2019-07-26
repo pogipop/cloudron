@@ -52,11 +52,11 @@ var addons = require('./addons.js'),
     async = require('async'),
     assert = require('assert'),
     child_process = require('child_process'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:docker.js'),
     once = require('once'),
     path = require('path'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     spawn = child_process.spawn,
     util = require('util'),
@@ -88,7 +88,7 @@ DockerError.INTERNAL_ERROR = 'Internal Error';
 DockerError.NOT_FOUND = 'Not found';
 DockerError.BAD_FIELD = 'Bad field';
 
-function debugApp(app, args) {
+function debugApp(app) {
     assert(typeof app === 'object');
 
     debug(app.fqdn + ' ' + util.format.apply(util, Array.prototype.slice.call(arguments, 1)));
@@ -190,8 +190,8 @@ function createSubcontainer(app, name, cmd, options, callback) {
         'CLOUDRON_PROXY_IP=172.18.0.1',
         `CLOUDRON_APP_HOSTNAME=${app.id}`,
         `CLOUDRON_ADMIN_EMAIL=${app.adminEmail}`,
-        `${envPrefix}WEBADMIN_ORIGIN=${config.adminOrigin()}`,
-        `${envPrefix}API_ORIGIN=${config.adminOrigin()}`,
+        `${envPrefix}WEBADMIN_ORIGIN=${settings.adminOrigin()}`,
+        `${envPrefix}API_ORIGIN=${settings.adminOrigin()}`,
         `${envPrefix}APP_ORIGIN=https://${domain}`,
         `${envPrefix}APP_DOMAIN=${domain}`
     ];

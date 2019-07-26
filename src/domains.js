@@ -35,7 +35,6 @@ module.exports = exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:domains'),
@@ -44,6 +43,7 @@ var assert = require('assert'),
     reverseProxy = require('./reverseproxy.js'),
     ReverseProxyError = reverseProxy.ReverseProxyError,
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     sysinfo = require('./sysinfo.js'),
     tld = require('tldjs'),
     util = require('util'),
@@ -150,7 +150,7 @@ function validateHostname(location, domainObject) {
     ];
     if (RESERVED_LOCATIONS.indexOf(location) !== -1) return new DomainsError(DomainsError.BAD_FIELD, location + ' is reserved');
 
-    if (hostname === config.adminFqdn()) return new DomainsError(DomainsError.BAD_FIELD, location + ' is reserved');
+    if (hostname === settings.adminFqdn()) return new DomainsError(DomainsError.BAD_FIELD, location + ' is reserved');
 
     // workaround https://github.com/oncletom/tld.js/issues/73
     var tmp = hostname.replace('_', '-');
@@ -343,7 +343,7 @@ function del(domain, auditSource, callback) {
     assert.strictEqual(typeof auditSource, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (domain === config.adminDomain()) return callback(new DomainsError(DomainsError.IN_USE));
+    if (domain === settings.adminDomain()) return callback(new DomainsError(DomainsError.IN_USE));
 
     domaindb.del(domain, function (error) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new DomainsError(DomainsError.NOT_FOUND));

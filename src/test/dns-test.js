@@ -10,7 +10,6 @@
 var async = require('async'),
     AWS = require('aws-sdk'),
     GCDNS = require('@google-cloud/dns').DNS,
-    config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
@@ -30,9 +29,6 @@ var AUDIT_SOURCE = { ip: '1.2.3.4' };
 
 describe('dns provider', function () {
     before(function (done) {
-        config._reset();
-        config.setFqdn(DOMAIN_0.domain);
-
         async.series([
             database.initialize,
             database._clear,

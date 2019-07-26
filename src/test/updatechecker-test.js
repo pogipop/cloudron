@@ -8,7 +8,6 @@
 var appdb = require('../appdb.js'),
     apps = require('../apps.js'),
     async = require('async'),
-    config = require('../config.js'),
     constants = require('../constants.js'),
     cron = require('../cron.js'),
     database = require('../database.js'),
@@ -70,10 +69,6 @@ function cleanup(done) {
 
 describe('updatechecker - box - manual (email)', function () {
     before(function (done) {
-        config._reset();
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'digitalocean');
         safe.fs.unlinkSync(paths.UPDATE_CHECKER_FILE);
 
         mailer._mailQueue = [];
@@ -81,6 +76,7 @@ describe('updatechecker - box - manual (email)', function () {
         async.series([
             database.initialize,
             database._clear,
+            settings._setApiServerOrigin.bind(null, 'http://localhost:4444'),
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
@@ -147,14 +143,11 @@ describe('updatechecker - box - manual (email)', function () {
 
 describe('updatechecker - box - automatic (no email)', function () {
     before(function (done) {
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'digitalocean');
-
         mailer._mailQueue = [];
 
         async.series([
             database.initialize,
+            settings._setApiServerOrigin.bind(null, 'http://localhost:4444'),
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
@@ -185,15 +178,11 @@ describe('updatechecker - box - automatic (no email)', function () {
 
 describe('updatechecker - box - automatic free (email)', function () {
     before(function (done) {
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('version', '1.0.0');
-        config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'digitalocean');
-
         mailer._mailQueue = [];
 
         async.series([
             database.initialize,
+            settings._setApiServerOrigin.bind(null, 'http://localhost:4444'),
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
@@ -249,16 +238,12 @@ describe('updatechecker - app - manual (email)', function () {
     };
 
     before(function (done) {
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('version', '1.0.0');
-        config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'digitalocean');
-
         mailer._mailQueue = [];
 
         async.series([
             database.initialize,
             database._clear,
+            settings._setApiServerOrigin.bind(null, 'http://localhost:4444'),
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
@@ -360,16 +345,12 @@ describe('updatechecker - app - automatic (no email)', function () {
     };
 
     before(function (done) {
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('version', '1.0.0');
-        config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'digitalocean');
-
         mailer._mailQueue = [];
 
         async.series([
             database.initialize,
             database._clear,
+            settings._setApiServerOrigin.bind(null, 'http://localhost:4444'),
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),
@@ -427,16 +408,12 @@ describe('updatechecker - app - automatic free (email)', function () {
     };
 
     before(function (done) {
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('version', '1.0.0');
-        config.set('apiServerOrigin', 'http://localhost:4444');
-        config.set('provider', 'digitalocean');
-
         mailer._mailQueue = [];
 
         async.series([
             database.initialize,
             database._clear,
+            settings._setApiServerOrigin.bind(null, 'http://localhost:4444'),
             cron.startJobs,
             domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
             mail.addDomain.bind(null, DOMAIN_0.domain),

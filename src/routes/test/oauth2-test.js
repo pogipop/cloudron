@@ -11,7 +11,6 @@ var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
     clientdb = require('../../clientdb.js'),
     clients = require('../../clients.js'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
@@ -22,6 +21,7 @@ var accesscontrol = require('../../accesscontrol.js'),
     querystring = require('querystring'),
     request = require('request'),
     server = require('../../server.js'),
+    settings = require('../../settings.js'),
     speakeasy = require('speakeasy'),
     superagent = require('superagent'),
     urlParse = require('url').parse,
@@ -200,14 +200,11 @@ describe('OAuth2', function () {
         };
 
         function setup(done) {
-            config._reset();
-            config.setFqdn(APP_0.domain);
-            config.setAdminFqdn('my.' + APP_0.domain);
-
             async.series([
                 server.start,
                 database._clear,
                 domains.add.bind(null, DOMAIN_0.domain, DOMAIN_0, AUDIT_SOURCE),
+                settings.setAdmin.bind(null, DOMAIN_0.domain, 'my.' + DOMAIN_0.domain),
                 clientdb.add.bind(null, CLIENT_0.id, CLIENT_0.appId, CLIENT_0.type, CLIENT_0.clientSecret, CLIENT_0.redirectURI, CLIENT_0.scope),
                 clientdb.add.bind(null, CLIENT_1.id, CLIENT_1.appId, CLIENT_1.type, CLIENT_1.clientSecret, CLIENT_1.redirectURI, CLIENT_1.scope),
                 clientdb.add.bind(null, CLIENT_2.id, CLIENT_2.appId, CLIENT_2.type, CLIENT_2.clientSecret, CLIENT_2.redirectURI, CLIENT_2.scope),
@@ -369,7 +366,7 @@ describe('OAuth2', function () {
                     expect(response.statusCode).to.eql(200);
                     expect(body).to.eql('<script>window.location.href = "/api/v1/session/login?returnTo=' + CLIENT_0.redirectURI + '";</script>');
 
-                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_0.redirectURI, { jar: true, followRedirect: false }, function (error, response, body) {
+                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_0.redirectURI, { jar: true, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
                         expect(response.headers.location).to.eql(CLIENT_0.redirectURI);
@@ -386,7 +383,7 @@ describe('OAuth2', function () {
                     expect(response.statusCode).to.eql(200);
                     expect(body).to.eql('<script>window.location.href = "/api/v1/session/login?returnTo=' + CLIENT_1.redirectURI + '";</script>');
 
-                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_1.redirectURI, { jar: true, followRedirect: false }, function (error, response, body) {
+                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_1.redirectURI, { jar: true, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
                         expect(response.headers.location).to.eql(CLIENT_1.redirectURI);
@@ -437,7 +434,7 @@ describe('OAuth2', function () {
                     expect(response.statusCode).to.eql(200);
                     expect(body).to.eql('<script>window.location.href = "/api/v1/session/login?returnTo=' + CLIENT_4.redirectURI + '";</script>');
 
-                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_4.redirectURI, { jar: true, followRedirect: false }, function (error, response, body) {
+                    request.get(SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_4.redirectURI, { jar: true, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
                         expect(response.headers.location).to.eql(CLIENT_4.redirectURI);
@@ -493,7 +490,7 @@ describe('OAuth2', function () {
                     var url = SERVER_URL + '/api/v1/session/login?returnTo=' + CLIENT_2.redirectURI;
                     var data = {};
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -514,7 +511,7 @@ describe('OAuth2', function () {
                         password: USER_0.password
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -535,7 +532,7 @@ describe('OAuth2', function () {
                         password: 'password'
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -556,7 +553,7 @@ describe('OAuth2', function () {
                         password: USER_0.password
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -578,7 +575,7 @@ describe('OAuth2', function () {
                         password: USER_0.password
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -617,7 +614,7 @@ describe('OAuth2', function () {
                             encoding: 'base32'
                         });
 
-                        superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error, result) {
+                        superagent.post(`${SERVER_URL}/api/v1/profile/twofactorauthentication/enable`).query({ access_token: accessToken }).send({ totpToken: totpToken }).end(function (error) {
                             callback(error);
                         });
                     }
@@ -653,7 +650,7 @@ describe('OAuth2', function () {
                         password: USER_0.password
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -675,7 +672,7 @@ describe('OAuth2', function () {
                         totpToken: 'wrongtoken'
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -701,7 +698,7 @@ describe('OAuth2', function () {
                         totpToken: totpToken
                     };
 
-                    request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                    request.post({ url: url, jar: jar, form: data }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -740,7 +737,7 @@ describe('OAuth2', function () {
                             password: USER_0.password
                         };
 
-                        request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                        request.post({ url: url, jar: jar, form: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(302);
 
@@ -759,7 +756,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow(CLIENT_2, 'code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -776,7 +773,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow(CLIENT_2, 'token', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=token';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -811,7 +808,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow(CLIENT_7, 'code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_7.redirectURI + '&client_id=' + CLIENT_7.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -858,7 +855,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow(CLIENT_7, 'token', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_7.redirectURI + '&client_id=' + CLIENT_7.id + '&response_type=token';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -884,7 +881,7 @@ describe('OAuth2', function () {
             it('fails after logout', function (done) {
                 startAuthorizationFlow(CLIENT_2, 'token', function (jar) {
 
-                    request.get(SERVER_URL + '/api/v1/session/logout', { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(SERVER_URL + '/api/v1/session/logout', { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
                         expect(response.headers.location).to.eql('/');
@@ -904,7 +901,7 @@ describe('OAuth2', function () {
             it('fails after logout width redirect', function (done) {
                 startAuthorizationFlow(CLIENT_2, 'token', function (jar) {
 
-                    request.get(SERVER_URL + '/api/v1/session/logout', { jar: jar, followRedirect: false, qs: { redirect: 'http://foobar' } }, function (error, response, body) {
+                    request.get(SERVER_URL + '/api/v1/session/logout', { jar: jar, followRedirect: false, qs: { redirect: 'http://foobar' } }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
                         expect(response.headers.location).to.eql('http://foobar');
@@ -946,7 +943,7 @@ describe('OAuth2', function () {
                             password: USER_0.password
                         };
 
-                        request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                        request.post({ url: url, jar: jar, form: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(302);
 
@@ -965,7 +962,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1018,7 +1015,7 @@ describe('OAuth2', function () {
                             password: USER_0.password
                         };
 
-                        request.post({ url: url, jar: jar, form: data }, function (error, response, body) {
+                        request.post({ url: url, jar: jar, form: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(302);
 
@@ -1037,7 +1034,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1046,7 +1043,7 @@ describe('OAuth2', function () {
                         expect(tmp.query.redirectURI).to.eql(CLIENT_2.redirectURI + '/');
                         expect(tmp.query.code).to.be.a('string');
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(401);
 
@@ -1060,7 +1057,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1076,7 +1073,7 @@ describe('OAuth2', function () {
                             client_secret: CLIENT_2.clientSecret
                         };
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(401);
                             done();
@@ -1089,7 +1086,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1105,7 +1102,7 @@ describe('OAuth2', function () {
                             client_secret: CLIENT_2.clientSecret
                         };
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(501);
                             done();
@@ -1118,7 +1115,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1134,7 +1131,7 @@ describe('OAuth2', function () {
                             client_secret: CLIENT_2.clientSecret
                         };
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(400);
                             done();
@@ -1147,7 +1144,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1163,7 +1160,7 @@ describe('OAuth2', function () {
                             // client_secret: CLIENT_2.clientSecret
                         };
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(401);
                             done();
@@ -1176,7 +1173,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1192,7 +1189,7 @@ describe('OAuth2', function () {
                             client_secret: CLIENT_2.clientSecret+CLIENT_2.clientSecret
                         };
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(401);
                             done();
@@ -1205,7 +1202,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1221,7 +1218,7 @@ describe('OAuth2', function () {
                             client_secret: CLIENT_2.clientSecret
                         };
 
-                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response, body) {
+                        request.post(SERVER_URL + '/api/v1/oauth/token', { jar: jar, json: data }, function (error, response) {
                             expect(error).to.not.be.ok();
                             expect(response.statusCode).to.eql(401);
                             done();
@@ -1234,7 +1231,7 @@ describe('OAuth2', function () {
                 startAuthorizationFlow('code', function (jar) {
                     var url = SERVER_URL + '/api/v1/oauth/dialog/authorize?redirect_uri=' + CLIENT_2.redirectURI + '&client_id=' + CLIENT_2.id + '&response_type=code';
 
-                    request.get(url, { jar: jar, followRedirect: false }, function (error, response, body) {
+                    request.get(url, { jar: jar, followRedirect: false }, function (error, response) {
                         expect(error).to.not.be.ok();
                         expect(response.statusCode).to.eql(302);
 
@@ -1296,14 +1293,12 @@ describe('Password', function () {
     };
 
     function setup(done) {
-        server.start(function (error) {
-            expect(error).to.not.be.ok();
-            database._clear(function (error) {
-                expect(error).to.not.be.ok();
-
-                userdb.add(USER_0.userId, USER_0, done);
-            });
-        });
+        async.series([
+            server.start,
+            database._clear,
+            settings.setAdmin.bind(null, 'example.com', 'my.example.com'),
+            userdb.add.bind(null, USER_0.userId, USER_0)
+        ], done);
     }
 
     function cleanup(done) {
@@ -1477,7 +1472,7 @@ describe('Password', function () {
         });
 
         it('succeeds', function (done) {
-            var scope = nock(config.adminOrigin())
+            var scope = nock(settings.adminOrigin())
                 .filteringPath(function (path) {
                     path = path.replace(/accessToken=[^&]*/, 'accessToken=token');
                     path = path.replace(/expiresAt=[^&]*/, 'expiresAt=1234');

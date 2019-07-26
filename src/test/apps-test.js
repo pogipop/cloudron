@@ -9,15 +9,12 @@ var appdb = require('../appdb.js'),
     apps = require('../apps.js'),
     AppsError = apps.AppsError,
     async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
     groupdb = require('../groupdb.js'),
     groups = require('../groups.js'),
     hat = require('../hat.js'),
-    settings = require('../settings.js'),
-    settingsdb = require('../settingsdb.js'),
     userdb = require('../userdb.js');
 
 let AUDIT_SOURCE = { ip: '1.2.3.4' };
@@ -158,11 +155,6 @@ describe('Apps', function () {
     };
 
     before(function (done) {
-        config._reset();
-
-        config.setFqdn(DOMAIN_0.domain);
-        config.setAdminFqdn('my.' + DOMAIN_0.domain);
-
         async.series([
             database.initialize,
             database._clear,

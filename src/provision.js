@@ -17,7 +17,6 @@ var appstore = require('./appstore.js'),
     async = require('async'),
     backups = require('./backups.js'),
     BackupsError = require('./backups.js').BackupsError,
-    config = require('./config.js'),
     constants = require('./constants.js'),
     clients = require('./clients.js'),
     cloudron = require('./cloudron.js'),
@@ -114,11 +113,9 @@ function unprovision(callback) {
 
     debug('unprovision');
 
-    config.setAdminDomain('');
-    config.setAdminFqdn('');
-
     // TODO: also cancel any existing configureWebadmin task
     async.series([
+        settings.setAdmin.bind(null, '', ''),
         mail.clearDomains,
         domains.clear
     ], callback);
@@ -285,7 +282,7 @@ function restore(backupConfig, backupId, version, auditSource, callback) {
                 // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
                 // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
                 // Once we have a 100% IP based restore, we can skip this
-                mail.setDnsRecords.bind(null, config.adminDomain()),
+                mail.setDnsRecords.bind(null, settings.adminDomain()),
                 eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
             ], function (error) {
                 gProvisionStatus.restore.active = false;
@@ -308,10 +305,10 @@ function getStatus(callback) {
 
             callback(null, _.extend({
                 version: constants.VERSION,
-                apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
+                apiServerOrigin: settings.apiServerOrigin(), // used by CaaS tool
                 provider: sysinfo.provider(),
                 cloudronName: cloudronName,
-                adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
+                adminFqdn: settings.adminDomain() ? settings.adminFqdn() : null,
                 activated: activated,
             }, gProvisionStatus));
         });

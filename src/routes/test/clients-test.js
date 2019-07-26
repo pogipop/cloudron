@@ -7,7 +7,6 @@
 
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     clients = require('../../clients.js'),
     database = require('../../database.js'),
@@ -24,9 +23,6 @@ var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
 function setup(done) {
-    config._reset();
-    config.setFqdn('example-clients-test.com');
-
     async.series([
         server.start,
         database._clear,

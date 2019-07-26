@@ -6,7 +6,6 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     expect = require('expect.js'),
     MockS3 = require('mock-aws-s3'),
@@ -15,15 +14,9 @@ var async = require('async'),
     path = require('path'),
     rimraf = require('rimraf'),
     s3 = require('../storage/s3.js'),
-    settings = require('../settings.js'),
-    settingsdb = require('../settingsdb.js');
-
-var DOMAIN_0 = 'example.com';
+    settings = require('../settings.js');
 
 function setup(done) {
-    config._reset();
-    config.set('fqdn', DOMAIN_0);
-    config.set('provider', 'digitalocean');
     nock.cleanAll();
 
     async.series([

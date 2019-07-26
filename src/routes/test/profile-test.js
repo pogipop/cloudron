@@ -7,7 +7,6 @@
 'use strict';
 
 var accesscontrol = require('../../accesscontrol.js'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -31,9 +30,6 @@ describe('Profile API', function () {
     var token_0;
 
     function setup(done) {
-        config._reset();
-        config.setFqdn('example-profile-test.com');
-
         server.start(function (error) {
             expect(!error).to.be.ok();
 

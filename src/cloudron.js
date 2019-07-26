@@ -30,7 +30,6 @@ var apps = require('./apps.js'),
     async = require('async'),
     backups = require('./backups.js'),
     clients = require('./clients.js'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     cron = require('./cron.js'),
     debug = require('debug')('box:cloudron'),
@@ -120,7 +119,7 @@ function runStartupTasks() {
     reverseProxy.configureDefaultServer(NOOP_CALLBACK);
 
     // always generate webadmin config since we have no versioning mechanism for the ejs
-    if (config.adminDomain()) reverseProxy.writeAdminConfig(config.adminDomain(), NOOP_CALLBACK);
+    if (settings.adminDomain()) reverseProxy.writeAdminConfig(settings.adminDomain(), NOOP_CALLBACK);
 
     // check activation state and start the platform
     users.isActivated(function (error, activated) {
@@ -165,13 +164,13 @@ function getConfig(callback) {
 
         // be picky about what we send out here since this is sent for 'normal' users as well
         callback(null, {
-            apiServerOrigin: config.apiServerOrigin(),
-            webServerOrigin: config.webServerOrigin(),
-            adminDomain: config.adminDomain(),
-            adminFqdn: config.adminFqdn(),
-            mailFqdn: config.mailFqdn(),
+            apiServerOrigin: settings.apiServerOrigin(),
+            webServerOrigin: settings.webServerOrigin(),
+            adminDomain: settings.adminDomain(),
+            adminFqdn: settings.adminFqdn(),
+            mailFqdn: settings.mailFqdn(),
             version: constants.VERSION,
-            isDemo: config.isDemo(),
+            isDemo: settings.isDemo(),
             memory: os.totalmem(),
             provider: sysinfo.provider(),
             cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
@@ -367,10 +366,10 @@ function setDashboardDomain(domain, auditSource, callback) {
 
             const fqdn = domains.fqdn(constants.ADMIN_LOCATION, domainObject);
 
-            config.setAdminDomain(domain);
-            config.setAdminFqdn(fqdn);
-
-            clients.addDefaultClients(config.adminOrigin(), function (error) {
+            async.series([
+                settings.setAdmin.bind(null, domain, fqdn),
+                clients.addDefaultClients.bind(null, settings.adminOrigin()),
+            ], function (error) {
                 if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
                 eventlog.add(eventlog.ACTION_DASHBOARD_DOMAIN_UPDATE, auditSource, { domain: domain, fqdn: fqdn });

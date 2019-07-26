@@ -7,7 +7,6 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     DatabaseError = require('../databaseerror.js'),
     expect = require('expect.js'),
@@ -58,8 +57,6 @@ var USER_1 = { // this user has not signed up yet
 };
 
 function setup(done) {
-    config.setFqdn(DOMAIN_0.domain);
-
     // ensure data/config/mount paths
     async.series([
         database.initialize,

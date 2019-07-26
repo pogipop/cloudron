@@ -68,8 +68,8 @@ echo -n "Generating Cloudron Support stats..."
 # clear file
 rm -rf $OUT
 
-echo -e $LINE"cloudron.conf"$LINE >> $OUT
-cat /etc/cloudron/cloudron.conf &>> $OUT
+echo -e $LINE"PROVIDER"$LINE >> $OUT
+cat /etc/cloudron/PROVIDER &>> $OUT || true
 
 echo -e $LINE"Docker container"$LINE >> $OUT
 if ! timeout --kill-after 10s 15s docker ps -a &>> $OUT 2>&1; then

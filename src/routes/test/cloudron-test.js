@@ -6,7 +6,6 @@
 /* global after:false */
 
 let async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -27,13 +26,11 @@ var USERNAME_1 = 'userTheFirst', EMAIL_1 = 'taO@zen.mac', userId_1, token_1;
 
 function setup(done) {
     nock.cleanAll();
-    config._reset();
-    config.setFqdn('example-cloudron-test.com');
-    config.setAdminFqdn('my.example-cloudron-test.com');
 
     async.series([
         server.start.bind(server),
         database._clear,
+        settings._setApiServerOrigin.bind(null, 'http://localhost:6060'),
         settings.setBackupConfig.bind(null, { provider: 'filesystem', backupFolder: '/tmp', format: 'tgz' })
     ], done);
 }
@@ -41,8 +38,6 @@ function setup(done) {
 function cleanup(done) {
     database._clear(function (error) {
         expect(error).to.not.be.ok();
-
-        config._reset();
 
         server.stop(done);
     });
@@ -188,8 +183,8 @@ describe('Cloudron', function () {
                 .end(function (error, result) {
                     expect(result.statusCode).to.equal(200);
                     expect(result.body.apiServerOrigin).to.eql('http://localhost:6060');
-                    expect(result.body.webServerOrigin).to.eql(null);
-                    expect(result.body.adminFqdn).to.eql(config.adminFqdn());
+                    expect(result.body.webServerOrigin).to.eql('https://cloudron.io');
+                    expect(result.body.adminFqdn).to.eql(settings.adminFqdn());
                     expect(result.body.version).to.eql(constants.VERSION);
                     expect(result.body.memory).to.eql(os.totalmem());
                     expect(result.body.cloudronName).to.be.a('string');

@@ -27,7 +27,6 @@ var addons = require('./addons.js'),
     async = require('async'),
     auditsource = require('./auditsource.js'),
     backups = require('./backups.js'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
@@ -47,6 +46,7 @@ var addons = require('./addons.js'),
     reverseProxy = require('./reverseproxy.js'),
     rimraf = require('rimraf'),
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     superagent = require('superagent'),
     sysinfo = require('./sysinfo.js'),
@@ -267,7 +267,7 @@ function downloadIcon(app, callback) {
 
     debugApp(app, 'Downloading icon of %s@%s', app.appStoreId, app.manifest.version);
 
-    var iconUrl = config.apiServerOrigin() + '/api/v1/apps/' + app.appStoreId + '/versions/' + app.manifest.version + '/icon';
+    var iconUrl = settings.apiServerOrigin() + '/api/v1/apps/' + app.appStoreId + '/versions/' + app.manifest.version + '/icon';
 
     async.retry({ times: 10, interval: 5000 }, function (retryCallback) {
         superagent

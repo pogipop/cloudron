@@ -6,7 +6,6 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -27,8 +26,6 @@ var token = null;
 
 function setup(done) {
     nock.cleanAll();
-    config._reset();
-    config.setFqdn('example-ssh-test.com');
     safe.fs.unlinkSync(AUTHORIZED_KEYS_FILE);
 
     async.series([
@@ -58,8 +55,6 @@ function setup(done) {
 function cleanup(done) {
     database._clear(function (error) {
         expect(error).to.not.be.ok();
-
-        config._reset();
 
         server.stop(done);
     });
@@ -231,7 +226,7 @@ describe('Support API', function () {
         });
 
         it('succeeds with ticket type', function (done) {
-            var scope2 = nock(config.apiServerOrigin())
+            var scope2 = nock(settings.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
                 .post('/api/v1/ticket?accessToken=CLOUDRON_TOKEN')
                 .reply(201, { });
@@ -247,7 +242,7 @@ describe('Support API', function () {
         });
 
         it('succeeds with app type', function (done) {
-            var scope2 = nock(config.apiServerOrigin())
+            var scope2 = nock(settings.apiServerOrigin())
                 .filteringRequestBody(function (/* unusedBody */) { return ''; }) // strip out body
                 .post('/api/v1/ticket?accessToken=CLOUDRON_TOKEN')
                 .reply(201, { });

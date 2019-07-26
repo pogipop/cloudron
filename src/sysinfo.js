@@ -10,7 +10,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    config = require('./config.js'),
     ec2 = require('./sysinfo/ec2.js'),
     fs = require('fs'),
     generic = require('./sysinfo/generic.js'),

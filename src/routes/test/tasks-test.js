@@ -6,7 +6,6 @@
 /* global after:false */
 
 var async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     expect = require('expect.js'),
@@ -20,10 +19,6 @@ var USERNAME = 'superadmin', PASSWORD = 'Foobar?1337', EMAIL ='silly@me.com';
 var token = null;
 
 function setup(done) {
-    config._reset();
-    config.setFqdn('example-tasks-test.com');
-    config.setAdminFqdn('my.example-tasks-test.com');
-
     async.series([
         server.start.bind(null),
         database._clear.bind(null),

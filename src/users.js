@@ -35,7 +35,6 @@ exports = module.exports = {
 
 let assert = require('assert'),
     crypto = require('crypto'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     debug = require('debug')('box:user'),
     DatabaseError = require('./databaseerror.js'),
@@ -46,6 +45,7 @@ let assert = require('assert'),
     mailer = require('./mailer.js'),
     qrcode = require('qrcode'),
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     speakeasy = require('speakeasy'),
     userdb = require('./userdb.js'),
     util = require('util'),
@@ -294,7 +294,7 @@ function removeUser(userId, auditSource, callback) {
     get(userId, function (error, user) {
         if (error) return callback(error);
 
-        if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
+        if (settings.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
 
         userdb.del(userId, function (error) {
             if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
@@ -510,7 +510,7 @@ function setPassword(userId, newPassword, callback) {
         if (error && error.reason === DatabaseError.NOT_FOUND) return callback(new UsersError(UsersError.NOT_FOUND));
         if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));
 
-        if (config.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
+        if (settings.isDemo() && user.username === constants.DEMO_USERNAME) return callback(new UsersError(UsersError.BAD_FIELD, 'Not allowed in demo mode'));
 
         var saltBuffer = Buffer.from(user.salt, 'hex');
         crypto.pbkdf2(newPassword, saltBuffer, CRYPTO_ITERATIONS, CRYPTO_KEY_LENGTH, CRYPTO_DIGEST, function (error, derivedKey) {
@@ -608,7 +608,7 @@ function setTwoFactorAuthenticationSecret(userId, callback) {
 
         if (result.twoFactorAuthenticationEnabled) return callback(new UsersError(UsersError.ALREADY_EXISTS));
 
-        var secret = speakeasy.generateSecret({ name: `Cloudron ${config.adminFqdn()} (${result.username})` });
+        var secret = speakeasy.generateSecret({ name: `Cloudron ${settings.adminFqdn()} (${result.username})` });
 
         userdb.update(userId, { twoFactorAuthenticationSecret: secret.base32, twoFactorAuthenticationEnabled: false }, function (error) {
             if (error) return callback(new UsersError(UsersError.INTERNAL_ERROR, error));

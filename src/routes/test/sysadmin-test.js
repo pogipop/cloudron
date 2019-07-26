@@ -6,7 +6,6 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     domains = require('../../domains.js'),
@@ -33,9 +32,6 @@ const DOMAIN_0 = {
 let AUDIT_SOURCE = { ip: '1.2.3.4' };
 
 function setup(done) {
-    config._reset();
-    config.setFqdn(DOMAIN_0.domain);
-
     async.series([
         server.start,
         database._clear,

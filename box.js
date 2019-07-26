@@ -14,7 +14,6 @@
 require('supererror')({ splatchError: true });
 
 let async = require('async'),
-    config = require('./src/config.js'),
     constants = require('./constants.js'),
     ldap = require('./src/ldap.js'),
     dockerProxy = require('./src/dockerproxy.js'),
@@ -22,15 +21,7 @@ let async = require('async'),
 
 console.log();
 console.log('==========================================');
-console.log(' Cloudron will use the following settings ');
-console.log('==========================================');
-console.log();
-console.log(' Environment:                    ', constants.CLOUDRON ? 'CLOUDRON' : 'TEST');
-console.log(' Version:                        ', constants.VERSION);
-console.log(' Admin Origin:                   ', config.adminOrigin());
-console.log(' Appstore API server origin:     ', config.apiServerOrigin());
-console.log(' Appstore Web server origin:     ', config.webServerOrigin());
-console.log();
+console.log(`           Cloudron ${constants.VERSION}  `);
 console.log('==========================================');
 console.log();
 

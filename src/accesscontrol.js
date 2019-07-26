@@ -27,7 +27,6 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
-    config = require('./config.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:accesscontrol'),
     tokendb = require('./tokendb.js'),

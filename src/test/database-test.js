@@ -10,7 +10,6 @@ var appdb = require('../appdb.js'),
     authcodedb = require('../authcodedb.js'),
     backupdb = require('../backupdb.js'),
     clientdb = require('../clientdb.js'),
-    config = require('../config.js'),
     database = require('../database'),
     DatabaseError = require('../databaseerror.js'),
     domaindb = require('../domaindb'),
@@ -91,19 +90,8 @@ const DOMAIN_1 = {
     tlsConfig: { provider: 'fallback' }
 };
 
-const TEST_DOMAIN = {
-    domain: 'example.com',
-    zoneName: 'example.com',
-    provider: 'manual',
-    config: {},
-    tlsConfig: { provider: 'fallback' }
-};
-
 describe('database', function () {
     before(function (done) {
-        config._reset();
-        config.setFqdn(TEST_DOMAIN.domain);
-
         async.series([
             database.initialize,
             database._clear
@@ -1879,9 +1867,6 @@ describe('database', function () {
 
     describe('groups', function () {
         before(function (done) {
-            config._reset();
-            config.setFqdn(TEST_DOMAIN.domain);
-
             async.series([
                 database.initialize,
                 database._clear,
@@ -1999,9 +1984,6 @@ describe('database', function () {
 
     describe('importFromFile', function () {
         before(function (done) {
-            config._reset();
-            config.setFqdn(TEST_DOMAIN.domain);
-
             async.series([
                 database.initialize,
                 database._clear

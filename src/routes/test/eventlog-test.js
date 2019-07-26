@@ -8,7 +8,6 @@
 
 var accesscontrol = require('../../accesscontrol.js'),
     async = require('async'),
-    config = require('../../config.js'),
     constants = require('../../constants.js'),
     database = require('../../database.js'),
     eventlogdb = require('../../eventlogdb.js'),
@@ -37,9 +36,6 @@ var EVENT_0 = {
 };
 
 function setup(done) {
-    config._reset();
-    config.setFqdn('example-eventlog-test.com');
-
     async.series([
         server.start.bind(server),
 

@@ -37,7 +37,6 @@ var accesscontrol = require('./accesscontrol.js'),
     assert = require('assert'),
     async = require('async'),
     clients = require('./clients.js'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     ClientsError = clients.ClientsError,
     crypto = require('crypto'),
@@ -801,7 +800,7 @@ function setupOauth(app, options, callback) {
             var env = [
                 { name: `${envPrefix}OAUTH_CLIENT_ID`, value: result.id },
                 { name: `${envPrefix}OAUTH_CLIENT_SECRET`, value: result.clientSecret },
-                { name: `${envPrefix}OAUTH_ORIGIN`, value: config.adminOrigin() }
+                { name: `${envPrefix}OAUTH_ORIGIN`, value: settings.adminOrigin() }
             ];
 
             debugApp(app, 'Setting oauth addon config to %j', env);

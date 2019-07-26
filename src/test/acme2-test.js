@@ -6,7 +6,6 @@
 'use strict';
 
 var async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     acme2 = require('../cert/acme2.js'),
     expect = require('expect.js'),
@@ -14,8 +13,6 @@ var async = require('async'),
 
 describe('Acme2', function () {
     before(function (done) {
-        config._reset();
-
         async.series([
             database.initialize,
             database._clear

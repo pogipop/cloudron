@@ -53,7 +53,6 @@ exports = module.exports = {
 
 var assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:mail'),
@@ -71,6 +70,7 @@ var assert = require('assert'),
     paths = require('./paths.js'),
     reverseProxy = require('./reverseproxy.js'),
     safe = require('safetydance'),
+    settings = require('./settings.js'),
     shell = require('./shell.js'),
     smtpTransport = require('nodemailer-smtp-transport'),
     sysinfo = require('./sysinfo.js'),
@@ -262,14 +262,14 @@ function checkSpf(domain, mailFqdn, callback) {
             let txtRecord = txtRecords[i].join(''); // https://agari.zendesk.com/hc/en-us/articles/202952749-How-long-can-my-SPF-record-be-
             if (txtRecord.indexOf('v=spf1 ') !== 0) continue; // not SPF
             spf.value = txtRecord;
-            spf.status = spf.value.indexOf(' a:' + config.adminFqdn()) !== -1;
+            spf.status = spf.value.indexOf(' a:' + settings.adminFqdn()) !== -1;
             break;
         }
 
         if (spf.status) {
             spf.expected = spf.value;
         } else if (i !== txtRecords.length) {
-            spf.expected = 'v=spf1 a:' + config.adminFqdn() + ' ' + spf.value.slice('v=spf1 '.length);
+            spf.expected = 'v=spf1 a:' + settings.adminFqdn() + ' ' + spf.value.slice('v=spf1 '.length);
         }
 
         callback(null, spf);
@@ -496,7 +496,7 @@ function getStatus(domain, callback) {
         };
     }
 
-    const mailFqdn = config.mailFqdn();
+    const mailFqdn = settings.mailFqdn();
 
     getDomain(domain, function (error, mailDomain) {
         if (error) return callback(error);
@@ -690,8 +690,8 @@ function restartMail(callback) {
 
     if (process.env.BOX_ENV === 'test' && !process.env.TEST_CREATE_INFRA) return callback();
 
-    debug(`restartMail: restarting mail container with ${config.mailFqdn()} ${config.adminDomain()}`);
-    configureMail(config.mailFqdn(), config.adminDomain(), callback);
+    debug(`restartMail: restarting mail container with ${settings.mailFqdn()} ${settings.adminDomain()}`);
+    configureMail(settings.mailFqdn(), settings.adminDomain(), callback);
 }
 
 function restartMailIfActivated(callback) {
@@ -882,14 +882,14 @@ function setDnsRecords(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    upsertDnsRecords(domain, config.mailFqdn(), callback);
+    upsertDnsRecords(domain, settings.mailFqdn(), callback);
 }
 
 function onMailFqdnChanged(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    const mailFqdn = config.mailFqdn(),
-        mailDomain = config.adminDomain();
+    const mailFqdn = settings.mailFqdn(),
+        mailDomain = settings.adminDomain();
 
     domains.getAll(function (error, allDomains) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
@@ -908,7 +908,7 @@ function addDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    const dkimSelector = domain === config.adminDomain() ? 'cloudron' : ('cloudron-' + config.adminDomain().replace(/\./g, ''));
+    const dkimSelector = domain === settings.adminDomain() ? 'cloudron' : ('cloudron-' + settings.adminDomain().replace(/\./g, ''));
 
     maildb.add(domain, { dkimSelector }, function (error) {
         if (error && error.reason === DatabaseError.ALREADY_EXISTS) return callback(new MailError(MailError.ALREADY_EXISTS, 'Domain already exists'));
@@ -916,7 +916,7 @@ function addDomain(domain, callback) {
         if (error) return callback(new MailError(MailError.INTERNAL_ERROR, error));
 
         async.series([
-            upsertDnsRecords.bind(null, domain, config.mailFqdn()), // do this first to ensure DKIM keys
+            upsertDnsRecords.bind(null, domain, settings.mailFqdn()), // do this first to ensure DKIM keys
             restartMailIfActivated
         ], NOOP_CALLBACK); // do these asynchronously
 
@@ -928,7 +928,7 @@ function removeDomain(domain, callback) {
     assert.strictEqual(typeof domain, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (domain === config.adminDomain()) return callback(new MailError(MailError.IN_USE));
+    if (domain === settings.adminDomain()) return callback(new MailError(MailError.IN_USE));
 
     maildb.del(domain, function (error) {
         if (error && error.reason === DatabaseError.IN_USE) return callback(new MailError(MailError.IN_USE));

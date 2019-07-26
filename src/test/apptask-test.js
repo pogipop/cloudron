@@ -9,7 +9,6 @@ var addons = require('../addons.js'),
     appdb = require('../appdb.js'),
     apptask = require('../apptask.js'),
     async = require('async'),
-    config = require('../config.js'),
     database = require('../database.js'),
     domains = require('../domains.js'),
     expect = require('expect.js'),
@@ -98,10 +97,6 @@ var awsHostedZones;
 
 describe('apptask', function () {
     before(function (done) {
-        config._reset();
-        config.setFqdn(DOMAIN_0.domain);
-        config.set('provider', 'digitalocean');
-
         awsHostedZones = {
             HostedZones: [{
                 Id: '/hostedzone/ZONEID',
@@ -143,12 +138,12 @@ describe('apptask', function () {
             expect(APP.httpPort).to.be.a('number');
             var client = net.connect(APP.httpPort);
             client.on('connect', function () { done(new Error('Port is not free:' + APP.httpPort)); });
-            client.on('error', function (error) { done(); });
+            client.on('error', function () { done(); });
         });
     });
 
     it('configure nginx correctly', function (done) {
-        apptask._configureReverseProxy(APP, function (error) {
+        apptask._configureReverseProxy(APP, function () {
             expect(fs.existsSync(paths.NGINX_APPCONFIG_DIR + '/' + APP.id + '.conf'));
             // expect(error).to.be(null); // this fails because nginx cannot be restarted
             done();
@@ -156,7 +151,7 @@ describe('apptask', function () {
     });
 
     it('unconfigure nginx', function (done) {
-        apptask._unconfigureReverseProxy(APP, function (error) {
+        apptask._unconfigureReverseProxy(APP, function () {
             expect(!fs.existsSync(paths.NGINX_APPCONFIG_DIR + '/' + APP.id + '.conf'));
             // expect(error).to.be(null); // this fails because nginx cannot be restarted
             done();

@@ -24,13 +24,13 @@ exports = module.exports = {
 
 let assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
     custom = require('./custom.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:notifications'),
     eventlog = require('./eventlog.js'),
     mailer = require('./mailer.js'),
     notificationdb = require('./notificationdb.js'),
+    settings = require('./settings.js'),
     users = require('./users.js'),
     util = require('util');
 
@@ -269,11 +269,11 @@ function backupFailed(eventId, taskId, errorMessage, callback) {
     assert.strictEqual(typeof errorMessage, 'string');
     assert.strictEqual(typeof callback, 'function');
 
-    if (custom.spec().alerts.email) mailer.backupFailed(custom.spec().alerts.email, errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
+    if (custom.spec().alerts.email) mailer.backupFailed(custom.spec().alerts.email, errorMessage, `${settings.adminOrigin()}/logs.html?taskId=${taskId}`);
     if (!custom.spec().alerts.notifyCloudronAdmins) return callback();
 
     actionForAllAdmins([], function (admin, callback) {
-        mailer.backupFailed(admin.email, errorMessage, `${config.adminOrigin()}/logs.html?taskId=${taskId}`);
+        mailer.backupFailed(admin.email, errorMessage, `${settings.adminOrigin()}/logs.html?taskId=${taskId}`);
         add(admin.id, eventId, 'Failed to backup', `Backup failed: ${errorMessage}. Logs are available [here](/logs.html?taskId=${taskId}). Will be retried in 4 hours`, callback);
     }, callback);
 }
