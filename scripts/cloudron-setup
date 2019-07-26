@@ -202,10 +202,10 @@ mkdir -p /etc/cloudron
 cat > "/etc/cloudron/cloudron.conf" <<CONF_END
 {
     "apiServerOrigin": "${apiServerOrigin}",
-    "webServerOrigin": "${webServerOrigin}",
-    "provider": "${provider}"
+    "webServerOrigin": "${webServerOrigin}"
 }
 CONF_END
+echo "${provider}" > /etc/cloudron/provider
 
 [[ -n "${license}" ]] && echo -n "$license" > /etc/cloudron/LICENSE
 

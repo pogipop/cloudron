@@ -51,6 +51,7 @@ var apps = require('./apps.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
     split = require('split'),
+    sysinfo = require('./sysinfo.js'),
     tasks = require('./tasks.js'),
     users = require('./users.js'),
     util = require('util');
@@ -172,7 +173,7 @@ function getConfig(callback) {
             version: constants.VERSION,
             isDemo: config.isDemo(),
             memory: os.totalmem(),
-            provider: config.provider(),
+            provider: sysinfo.provider(),
             cloudronName: allSettings[settings.CLOUDRON_NAME_KEY],
             uiSpec: custom.uiSpec()
         });

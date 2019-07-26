@@ -18,7 +18,6 @@ exports.up = function(db, callback) {
         db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'web_server_origin', config.webServerOrigin ]),
         db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'admin_domain', config.adminDomain ]),
         db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'admin_fqdn', config.adminFqdn ]),
-        db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'provider', config.provider ]),
         db.runSql.bind(db, 'INSERT settings (name, value) VALUES(?, ?)', [ 'demo', config.isDemo ]),
         db.runSql.bind(db, 'COMMIT')
     ], callback);

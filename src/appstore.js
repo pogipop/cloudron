@@ -40,6 +40,7 @@ var apps = require('./apps.js'),
     semver = require('semver'),
     settings = require('./settings.js'),
     superagent = require('superagent'),
+    sysinfo = require('./sysinfo.js'),
     users = require('./users.js'),
     util = require('util');
 
@@ -282,7 +283,7 @@ function sendAliveStatus(callback) {
         var data = {
             version: constants.VERSION,
             adminFqdn: config.adminFqdn(),
-            provider: config.provider(),
+            provider: sysinfo.provider(),
             backendSettings: backendSettings,
             machine: {
                 cpus: os.cpus(),

@@ -32,6 +32,7 @@ var appstore = require('./appstore.js'),
     semver = require('semver'),
     settings = require('./settings.js'),
     superagent = require('superagent'),
+    sysinfo = require('./sysinfo.js'),
     users = require('./users.js'),
     UsersError = users.UsersError,
     tld = require('tldjs'),
@@ -308,7 +309,7 @@ function getStatus(callback) {
             callback(null, _.extend({
                 version: constants.VERSION,
                 apiServerOrigin: config.apiServerOrigin(), // used by CaaS tool
-                provider: config.provider(),
+                provider: sysinfo.provider(),
                 cloudronName: cloudronName,
                 adminFqdn: config.adminDomain() ? config.adminFqdn() : null,
                 activated: activated,

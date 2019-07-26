@@ -10,18 +10,18 @@ exports = module.exports = {
 
 var assert = require('assert'),
     auditSource = require('../auditsource'),
-    config = require('../config.js'),
     debug = require('debug')('box:routes/setup'),
     HttpError = require('connect-lastmile').HttpError,
     HttpSuccess = require('connect-lastmile').HttpSuccess,
     provision = require('../provision.js'),
     ProvisionError = require('../provision.js').ProvisionError,
+    sysinfo = require('../sysinfo.js'),
     superagent = require('superagent');
 
 function providerTokenAuth(req, res, next) {
     assert.strictEqual(typeof req.body, 'object');
 
-    if (config.provider() === 'ami') {
+    if (sysinfo.provider() === 'ami') {
         if (typeof req.body.providerToken !== 'string' || !req.body.providerToken) return next(new HttpError(400, 'providerToken must be a non empty string'));
 
         superagent.get('http://169.254.169.254/latest/meta-data/instance-id').timeout(30 * 1000).end(function (error, result) {

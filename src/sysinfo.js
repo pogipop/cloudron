@@ -5,7 +5,8 @@ exports = module.exports = {
 
     getPublicIp: getPublicIp,
 
-    hasIPv6: hasIPv6
+    hasIPv6: hasIPv6,
+    provider: provider
 };
 
 var assert = require('assert'),
@@ -13,7 +14,9 @@ var assert = require('assert'),
     ec2 = require('./sysinfo/ec2.js'),
     fs = require('fs'),
     generic = require('./sysinfo/generic.js'),
+    paths = require('./paths.js'),
     scaleway = require('./sysinfo/scaleway.js'),
+    safe = require('safetydance'),
     util = require('util');
 
 function SysInfoError(reason, errorOrMessage) {
@@ -38,10 +41,22 @@ util.inherits(SysInfoError, Error);
 SysInfoError.INTERNAL_ERROR = 'Internal Error';
 SysInfoError.EXTERNAL_ERROR = 'External Error';
 
+let gProvider = null;
+
+
+function provider() {
+    if (gProvider) return gProvider;
+
+    gProvider = safe.fs.readFileSync(paths.PROVIDER_FILE, 'utf8');
+    if (!gProvider) return gProvider = 'generic';
+
+    return gProvider;
+}
+
 function getApi(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    switch (config.provider()) {
+    switch (provider()) {
     case 'ec2': return callback(null, ec2);
     case 'lightsail': return callback(null, ec2);
     case 'ami': return callback(null, ec2);

@@ -128,15 +128,15 @@ function getCloudronAvatar(req, res, next) {
 }
 
 function getBackupConfig(req, res, next) {
-    settings.getBackupConfig(function (error, config) {
+    settings.getBackupConfig(function (error, backupConfig) {
         if (error) return next(new HttpError(500, error));
 
         // always send provider as it is used by the UI to figure if backups are disabled ('noop' backend)
         if (!custom.spec().backups.configurable) {
-            return next(new HttpSuccess(200, { provider: config.provider }));
+            return next(new HttpSuccess(200, { provider: backupConfig.provider }));
         }
 
-        next(new HttpSuccess(200, backups.removePrivateFields(config)));
+        next(new HttpSuccess(200, backups.removePrivateFields(backupConfig)));
     });
 }
 

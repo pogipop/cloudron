@@ -12,7 +12,6 @@ exports = module.exports = {
     TEST: process.env.BOX_ENV === 'test',
 
     // convenience getters
-    provider: provider,
     apiServerOrigin: apiServerOrigin,
     webServerOrigin: webServerOrigin,
     adminDomain: adminDomain,
@@ -59,7 +58,6 @@ function saveSync() {
         webServerOrigin: data.webServerOrigin,
         adminDomain: data.adminDomain,
         adminFqdn: data.adminFqdn,
-        provider: data.provider,
         isDemo: data.isDemo
     };
 
@@ -80,7 +78,6 @@ function initConfig() {
     data.adminDomain = '';
     data.apiServerOrigin = null;
     data.webServerOrigin = null;
-    data.provider = 'generic';
 
     // overrides for local testings
     if (exports.TEST) {
@@ -151,6 +148,3 @@ function isDemo() {
     return get('isDemo') === true;
 }
 
-function provider() {
-    return get('provider');
-}

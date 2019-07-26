@@ -9,6 +9,7 @@ exports = module.exports = {
     INFRA_VERSION_FILE: path.join(config.baseDir(), 'platformdata/INFRA_VERSION'),
 
     LICENSE_FILE: '/etc/cloudron/LICENSE',
+    PROVIDER_FILE: '/etc/cloudron/PROVIDER',
 
     PLATFORM_DATA_DIR: path.join(config.baseDir(), 'platformdata'),
     APPS_DATA_DIR: path.join(config.baseDir(), 'appsdata'),
