@@ -8,7 +8,7 @@ exports = module.exports = {
 };
 
 let assert = require('assert'),
-    config = require('./config.js'),
+    constants = require('./constants.js'),
     shell = require('./shell.js'),
     once = require('once'),
     path = require('path'),
@@ -17,8 +17,8 @@ let assert = require('assert'),
     util = require('util');
 
 // the logic here is also used in the cloudron-support tool
-var AUTHORIZED_KEYS_FILEPATH = config.TEST ? path.join(paths.baseDir(), 'authorized_keys') : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys'),
-    AUTHORIZED_KEYS_USER = config.TEST ? process.getuid() : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? 'ubuntu' : 'root'),
+var AUTHORIZED_KEYS_FILEPATH = constants.TEST ? path.join(paths.baseDir(), 'authorized_keys') : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? '/home/ubuntu/.ssh/authorized_keys' : '/root/.ssh/authorized_keys'),
+    AUTHORIZED_KEYS_USER = constants.TEST ? process.getuid() : ((sysinfo.provider() === 'ec2' || sysinfo.provider() === 'lightsail' || sysinfo.provider() === 'ami') ? 'ubuntu' : 'root'),
     AUTHORIZED_KEYS_CMD = path.join(__dirname, 'scripts/remotesupport.sh');
 
 function SupportError(reason, errorOrMessage) {

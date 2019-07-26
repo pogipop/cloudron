@@ -8,7 +8,6 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     AppsError = apps.AppsError,
     assert = require('assert'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     express = require('express'),
     debug = require('debug')('box:dockerproxy'),
@@ -30,7 +29,7 @@ function authorizeApp(req, res, next) {
     // - only allow managing and inspection of containers belonging to the app
 
     // make the tests pass for now
-    if (config.TEST) {
+    if (constants.TEST) {
         req.app = { id: 'testappid' };
         return next();
     }
@@ -121,7 +120,7 @@ function start(callback) {
 
     let proxyServer = express();
 
-    if (config.TEST) {
+    if (constants.TEST) {
         proxyServer.use(function (req, res, next) {
             debug('proxying: ' + req.method, req.url);
             next();

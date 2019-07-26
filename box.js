@@ -25,7 +25,7 @@ console.log('==========================================');
 console.log(' Cloudron will use the following settings ');
 console.log('==========================================');
 console.log();
-console.log(' Environment:                    ', config.CLOUDRON ? 'CLOUDRON' : 'TEST');
+console.log(' Environment:                    ', constants.CLOUDRON ? 'CLOUDRON' : 'TEST');
 console.log(' Version:                        ', constants.VERSION);
 console.log(' Admin Origin:                   ', config.adminOrigin());
 console.log(' Appstore API server origin:     ', config.apiServerOrigin());

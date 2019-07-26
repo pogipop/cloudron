@@ -1,15 +1,9 @@
 'use strict';
 
 exports = module.exports = {
-    baseDir: baseDir,
-
     // values set here will be lost after a upgrade/update. use the sqlite database
     // for persistent values that need to be backed up
     set: set,
-
-    // ifdefs to check environment
-    CLOUDRON: process.env.BOX_ENV === 'cloudron',
-    TEST: process.env.BOX_ENV === 'test',
 
     // convenience getters
     apiServerOrigin: apiServerOrigin,
@@ -31,25 +25,19 @@ exports = module.exports = {
 };
 
 var assert = require('assert'),
+    constants = require('./constants.js'),
     fs = require('fs'),
     path = require('path'),
+    paths = require('./paths.js'),
     safe = require('safetydance'),
     _ = require('underscore');
 
-
 // assert on unknown environment can't proceed
-assert(exports.CLOUDRON || exports.TEST, 'Unknown environment. This should not happen!');
+assert(constants.CLOUDRON || constants.TEST, 'Unknown environment. This should not happen!');
 
 var data = { };
 
-function baseDir() {
-    const homeDir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
-    if (exports.CLOUDRON) return homeDir;
-    if (exports.TEST) return path.join(homeDir, '.cloudron_test');
-    // cannot reach
-}
-
-const cloudronConfigFileName = exports.CLOUDRON ? '/etc/cloudron/cloudron.conf' : path.join(baseDir(), 'cloudron.conf');
+const cloudronConfigFileName = constants.CLOUDRON ? '/etc/cloudron/cloudron.conf' : path.join(paths.baseDir(), 'cloudron.conf');
 
 function saveSync() {
     // only save values we want to have in the cloudron.conf, see start.sh
@@ -80,7 +68,7 @@ function initConfig() {
     data.webServerOrigin = null;
 
     // overrides for local testings
-    if (exports.TEST) {
+    if (constants.TEST) {
         data.apiServerOrigin = 'http://localhost:6060'; // hock doesn't support https
     }
 

@@ -28,6 +28,7 @@ var addons = require('./addons.js'),
     auditsource = require('./auditsource.js'),
     backups = require('./backups.js'),
     config = require('./config.js'),
+    constants = require('./constants.js'),
     database = require('./database.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:apptask'),
@@ -447,7 +448,7 @@ function waitForDnsPropagation(app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    if (!config.CLOUDRON) {
+    if (!constants.CLOUDRON) {
         debugApp(app, 'Skipping dns propagation check for development');
         return callback(null);
     }

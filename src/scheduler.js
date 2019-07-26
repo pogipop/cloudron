@@ -8,7 +8,7 @@ var appdb = require('./appdb.js'),
     apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
-    config = require('./config.js'),
+    constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     debug = require('debug')('box:scheduler'),
     docker = require('./docker.js'),
@@ -119,7 +119,7 @@ function createCronJobs(app, schedulerConfig) {
 
         const randomSecond = Math.floor(60*Math.random()); // don't start all crons to decrease memory pressure
 
-        var cronTime = (config.TEST ? '*/5 ' : `${randomSecond} `) + task.schedule; // time ticks faster in tests
+        var cronTime = (constants.TEST ? '*/5 ' : `${randomSecond} `) + task.schedule; // time ticks faster in tests
 
         debug(`createCronJobs: ${app.fqdn} task ${taskName} scheduled at ${cronTime} with cmd ${task.command}`);
 

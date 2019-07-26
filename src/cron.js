@@ -15,7 +15,6 @@ var appHealthMonitor = require('./apphealthmonitor.js'),
     auditSource = require('./auditsource.js'),
     backups = require('./backups.js'),
     cloudron = require('./cloudron.js'),
-    config = require('./config.js'),
     constants = require('./constants.js'),
     CronJob = require('cron').CronJob,
     debug = require('debug')('box:cron'),
@@ -165,7 +164,7 @@ function recreateJobs(tz) {
 
     if (gJobs.schedulerSync) gJobs.schedulerSync.stop();
     gJobs.schedulerSync = new CronJob({
-        cronTime: config.TEST ? '*/10 * * * * *' : '00 */1 * * * *', // every minute
+        cronTime: constants.TEST ? '*/10 * * * * *' : '00 */1 * * * *', // every minute
         onTick: scheduler.sync,
         start: true,
         timeZone: tz
