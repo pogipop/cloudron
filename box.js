@@ -14,9 +14,9 @@
 require('supererror')({ splatchError: true });
 
 let async = require('async'),
-    constants = require('./constants.js'),
-    ldap = require('./src/ldap.js'),
+    constants = require('./src/constants.js'),
     dockerProxy = require('./src/dockerproxy.js'),
+    ldap = require('./src/ldap.js'),
     server = require('./src/server.js');
 
 console.log();
