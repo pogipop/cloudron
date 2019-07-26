@@ -205,7 +205,7 @@ cat > "/etc/cloudron/cloudron.conf" <<CONF_END
     "webServerOrigin": "${webServerOrigin}"
 }
 CONF_END
-echo "${provider}" > /etc/cloudron/provider
+echo "${provider}" > /etc/cloudron/PROVIDER
 
 [[ -n "${license}" ]] && echo -n "$license" > /etc/cloudron/LICENSE
 
