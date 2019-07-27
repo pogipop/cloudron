@@ -3,11 +3,13 @@
 require('supererror')({ splatchError: true });
 
 var assert = require('assert'),
+    async = require('async'),
     backups = require('./backups.js'),
     database = require('./database.js'),
     debug = require('debug')('box:taskworker'),
     domains = require('./domains.js'),
     reverseProxy = require('./reverseproxy.js'),
+    settings = require('./settings.js'),
     tasks = require('./tasks.js'),
     updater = require('./updater.js');
 
@@ -33,10 +35,17 @@ process.on('SIGTERM', function () {
 assert.strictEqual(process.argv.length, 3, 'Pass the taskid as argument');
 const taskId = process.argv[2];
 
+function initialize(callback) {
+    async.series([
+        database.initialize,
+        settings.initCache
+    ], callback);
+}
+
 // Main process starts here
 debug(`Staring task ${taskId}`);
 
-database.initialize(function (error) {
+initialize(function (error) {
     if (error) return process.exit(50);
 
     tasks.get(taskId, function (error, task) {

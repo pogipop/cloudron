@@ -64,7 +64,10 @@ var NOOP_CALLBACK = function (error) { if (error) debug(error); };
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.initialize(callback);
+    async.series([
+        database.initialize,
+        settings.initCache
+    ], callback);
 }
 
 function debugApp(app) {

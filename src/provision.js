@@ -279,10 +279,6 @@ function restore(backupConfig, backupId, version, auditSource, callback) {
                 setProgress.bind(null, 'restore', 'Downloading backup'),
                 backups.restore.bind(null, backupConfig, backupId, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
                 setProgress.bind(null, 'restore', 'Applying auto-configuration'),
-                // currently, our suggested restore flow is after a dnsSetup. The dnSetup creates DKIM keys and updates the DNS
-                // for this reason, we have to re-setup DNS after a restore so it has DKIm from the backup
-                // Once we have a 100% IP based restore, we can skip this
-                mail.setDnsRecords.bind(null, settings.adminDomain()),
                 eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
             ], function (error) {
                 gProvisionStatus.restore.active = false;

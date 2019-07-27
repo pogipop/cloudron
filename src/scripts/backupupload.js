@@ -10,14 +10,19 @@ if (process.argv[2] === '--check') return console.log('OK');
 require('supererror')({ splatchError: true });
 
 var assert = require('assert'),
+    async = require('async'),
     backups = require('../backups.js'),
     database = require('../database.js'),
-    debug = require('debug')('box:backupupload');
+    debug = require('debug')('box:backupupload'),
+    settings = require('../settings.js');
 
 function initialize(callback) {
     assert.strictEqual(typeof callback, 'function');
 
-    database.initialize(callback);
+    async.series([
+        database.initialize,
+        settings.initCache
+    ], callback);
 }
 
 // Main process starts here
