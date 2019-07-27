@@ -91,8 +91,8 @@ function getCertApi(domainObject, callback) {
     var api = domainObject.tlsConfig.provider === 'caas' ? caas : acme2;
 
     var options = { prod: false, performHttpAuthorization: false, wildcard: false, email: '' };
-    if (domainObject.tlsConfig.provider !== 'caas') { // matches 'le-prod' or 'letsencrypt-prod'
-        options.prod = domainObject.tlsConfig.provider.match(/.*-prod/) !== null;
+    if (domainObject.tlsConfig.provider !== 'caas') {
+        options.prod = domainObject.tlsConfig.provider.match(/.*-prod/) !== null; // matches 'le-prod' or 'letsencrypt-prod'
         options.performHttpAuthorization = domainObject.provider.match(/noop|manual|wildcard/) !== null;
         options.wildcard = !!domainObject.tlsConfig.wildcard;
     }
