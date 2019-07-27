@@ -168,9 +168,8 @@ function setup(dnsConfig, backupConfig, auditSource, callback) {
                 async.series([
                     autoRegister.bind(null, domain),
                     domains.prepareDashboardDomain.bind(null, domain, auditSource, (progress) => setProgress('setup', progress.message, NOOP_CALLBACK)),
-                    cloudron.setDashboardDomain.bind(null, domain, auditSource), // this sets up the config.fqdn()
-                    mail.addDomain.bind(null, domain), // this relies on config.mailFqdn() and config.adminDomain()
-                    setProgress.bind(null, 'setup', 'Applying auto-configuration'),
+                    cloudron.setDashboardDomain.bind(null, domain, auditSource),
+                    mail.addDomain.bind(null, domain), // this relies on settings.mailFqdn() and settings.adminDomain()
                     (next) => { if (!backupConfig) return next(); settings.setBackupConfig(backupConfig, next); },
                     setProgress.bind(null, 'setup', 'Done'),
                     eventlog.add.bind(null, eventlog.ACTION_PROVISION, auditSource, { })
@@ -278,7 +277,10 @@ function restore(backupConfig, backupId, version, auditSource, callback) {
             async.series([
                 setProgress.bind(null, 'restore', 'Downloading backup'),
                 backups.restore.bind(null, backupConfig, backupId, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
-                setProgress.bind(null, 'restore', 'Applying auto-configuration'),
+                settings.initCache,
+                domains.prepareDashboardDomain.bind(null, settings.adminDomain(), auditSource, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
+                cloudron.setDashboardDomain.bind(null, settings.adminDomain(), auditSource),
+                settings.setBackupConfig.bind(null, backupConfig), // update with the latest backupConfig
                 eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
             ], function (error) {
                 gProvisionStatus.restore.active = false;

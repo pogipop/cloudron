@@ -1654,4 +1654,5 @@
 * Add SparkPost as mail relay backend
 * Add Wasabi storage backend
 * TOTP tokens are now checked for with +- 60 seconds
+* IP based restore
 
