@@ -208,8 +208,8 @@ if ! /bin/bash "${box_src_tmp_dir}/scripts/installer.sh" &>> "${LOG_FILE}"; then
     exit 1
 fi
 
-mysql -uroot -ppassword -e "REPLACE INTO box.settings (name, value) VALUES ('api_server_origin', '${apiServerOrigin}');"
-mysql -uroot -ppassword -e "REPLACE INTO box.settings (name, value) VALUES ('web_server_origin', '${webServerOrigin}');"
+mysql -uroot -ppassword -e "REPLACE INTO box.settings (name, value) VALUES ('api_server_origin', '${apiServerOrigin}');" 2>/dev/null
+mysql -uroot -ppassword -e "REPLACE INTO box.settings (name, value) VALUES ('web_server_origin', '${webServerOrigin}');" 2>/dev/null
 
 echo -n "=> Waiting for cloudron to be ready (this takes some time) ..."
 while true; do
