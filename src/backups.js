@@ -642,7 +642,7 @@ function restore(backupConfig, backupId, progressCallback, callback) {
 
             debug('restore: database imported');
 
-            callback();
+            settings.initCache(callback);
         });
     });
 }
