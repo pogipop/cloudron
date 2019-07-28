@@ -19,6 +19,8 @@ exports = module.exports = {
     setDashboardAndMailDomain: setDashboardAndMailDomain,
     renewCerts: renewCerts,
 
+    setupDashboard: setupDashboard,
+
     runSystemChecks: runSystemChecks,
 
     // exposed for testing
@@ -395,6 +397,17 @@ function setDashboardAndMailDomain(domain, auditSource, callback) {
 
         callback(null);
     });
+}
+
+function setupDashboard(auditSource, progressCallback, callback) {
+    assert.strictEqual(typeof auditSource, 'object');
+    assert.strictEqual(typeof progressCallback, 'function');
+    assert.strictEqual(typeof callback, 'function');
+
+    async.series([
+        domains.prepareDashboardDomain.bind(null, settings.adminDomain(), auditSource, progressCallback),
+        setDashboardDomain.bind(null, settings.adminDomain(), auditSource)
+    ], callback);
 }
 
 function renewCerts(options, auditSource, callback) {

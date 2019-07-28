@@ -277,8 +277,7 @@ function restore(backupConfig, backupId, version, auditSource, callback) {
             async.series([
                 setProgress.bind(null, 'restore', 'Downloading backup'),
                 backups.restore.bind(null, backupConfig, backupId, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
-                domains.prepareDashboardDomain.bind(null, settings.adminDomain(), auditSource, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
-                cloudron.setDashboardDomain.bind(null, settings.adminDomain(), auditSource),
+                cloudron.setupDashboard.bind(null, auditSource, (progress) => setProgress('restore', progress.message, NOOP_CALLBACK)),
                 settings.setBackupConfig.bind(null, backupConfig), // update with the latest backupConfig
                 eventlog.add.bind(null, eventlog.ACTION_RESTORE, auditSource, { backupId }),
             ], function (error) {
