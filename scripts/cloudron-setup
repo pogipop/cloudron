@@ -92,8 +92,9 @@ fi
 echo "Running cloudron-setup with args : $@" > "${LOG_FILE}"
 
 # validate arguments in the absence of data
+readonly AVAILABLE_PROVIDERS="azure, caas, cloudscale, contabo, digitalocean, ec2, exoscale, galaxygate, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, time4vps, upcloud, vultr or generic"
 if [[ -z "${provider}" ]]; then
-    echo "--provider is required (azure, contabo, digitalocean, ec2, exoscale, galaxygate, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, upcloud, vultr or generic)"
+    echo "--provider is required ($AVAILABLE_PROVIDERS)"
     exit 1
 elif [[  \
             "${provider}" != "ami" && \
@@ -106,7 +107,6 @@ elif [[  \
             "${provider}" != "ec2" && \
             "${provider}" != "exoscale" && \
             "${provider}" != "galaxygate" && \
-            "${provider}" != "digitalocean" && \
             "${provider}" != "gce" && \
             "${provider}" != "hetzner" && \
             "${provider}" != "lightsail" && \
@@ -117,12 +117,14 @@ elif [[  \
             "${provider}" != "ovh" && \
             "${provider}" != "rosehosting" && \
             "${provider}" != "scaleway" && \
+            "${provider}" != "time4vps" && \
+            "${provider}" != "time4vps-image" && \
             "${provider}" != "upcloud" && \
             "${provider}" != "upcloud-image" && \
             "${provider}" != "vultr" && \
             "${provider}" != "generic" \
         ]]; then
-    echo "--provider must be one of: azure, cloudscale.ch, contabo, digitalocean, ec2, exoscale, galaxygate, gce, hetzner, lightsail, linode, netcup, ovh, rosehosting, scaleway, upcloud, vultr or generic"
+    echo "--provider must be one of: $AVAILABLE_PROVIDERS"
     exit 1
 fi
 
