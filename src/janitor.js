@@ -63,7 +63,7 @@ function cleanupTmpVolume(containerInfo, callback) {
     assert.strictEqual(typeof containerInfo, 'object');
     assert.strictEqual(typeof callback, 'function');
 
-    var cmd = 'find /tmp -mtime +10 -exec rm -rf {} +'.split(' '); // 10 days old
+    var cmd = 'find /tmp -type f -mtime +10 -exec rm -rf {} +'.split(' '); // 10 day old files
 
     debug('cleanupTmpVolume %j', containerInfo.Names);
 
