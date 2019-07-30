@@ -1,7 +1,8 @@
 # logrotate config for box logs
 
+# keep upto 5 logs of size 10M each
 /home/yellowtent/platformdata/logs/box.log {
-    rotate 10
+    rotate 5
     size 10M
     # we never compress so we can simply tail the files
     nocompress

@@ -232,7 +232,7 @@ function addLogrotateConfig(app, callback) {
         if (!runVolume) return callback(new Error('App does not have /run mounted'));
 
         // logrotate configs can have arbitrary commands, so the config files must be owned by root
-        var logrotateConf = ejs.render(LOGROTATE_CONFIG_EJS, { volumePath: runVolume.Source });
+        var logrotateConf = ejs.render(LOGROTATE_CONFIG_EJS, { volumePath: runVolume.Source, appId: app.id });
         var tmpFilePath = path.join(os.tmpdir(), app.id + '.logrotate');
         fs.writeFile(tmpFilePath, logrotateConf, function (error) {
             if (error) return callback(error);

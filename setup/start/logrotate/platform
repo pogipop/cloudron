@@ -1,0 +1,31 @@
+# logrotate config for app, crash, addon and task logs
+
+# man 7 glob
+/home/yellowtent/platformdata/logs/graphite/*.log
+/home/yellowtent/platformdata/logs/mail/*.log
+/home/yellowtent/platformdata/logs/mysql/*.log
+/home/yellowtent/platformdata/logs/mongodb/*.log
+/home/yellowtent/platformdata/logs/postgresql/*.log
+/home/yellowtent/platformdata/logs/sftp/*.log
+/home/yellowtent/platformdata/logs/redis-*/*.log
+/home/yellowtent/platformdata/logs/crash/*.log
+/home/yellowtent/platformdata/logs/updater/*.log {
+    # only keep one rotated file, we currently do not send that over the api
+    rotate 1
+    size 10M
+    missingok
+    # we never compress so we can simply tail the files
+    nocompress
+    copytruncate
+}
+
+# keep task logs for a week. the 'nocreate' option ensures empty log files are not
+# created post rotation
+/home/yellowtent/platformdata/logs/tasks/*.log {
+    minage 7
+    daily
+    rotate 0
+    missingok
+    nocreate
+}
+

@@ -122,8 +122,8 @@ echo "==> Configuring logrotate"
 if ! grep -q "^include ${PLATFORM_DATA_DIR}/logrotate.d" /etc/logrotate.conf; then
     echo -e "\ninclude ${PLATFORM_DATA_DIR}/logrotate.d\n" >> /etc/logrotate.conf
 fi
+rm -f "${PLATFORM_DATA_DIR}/logrotate.d/"*
 cp "${script_dir}/start/logrotate/"* "${PLATFORM_DATA_DIR}/logrotate.d/"
-rm -f "${PLATFORM_DATA_DIR}/logrotate.d/box-logrotate" "${PLATFORM_DATA_DIR}/logrotate.d/app-logrotate" # remove pre 3.6 config files
 
 # logrotate files have to be owned by root, this is here to fixup existing installations where we were resetting the owner to yellowtent
 chown root:root "${PLATFORM_DATA_DIR}/logrotate.d/"
