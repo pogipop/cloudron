@@ -236,8 +236,13 @@ function appUpdated(eventId, app, callback) {
     assert.strictEqual(typeof app, 'object');
     assert.strictEqual(typeof callback, 'function');
 
+    const tmp = app.manifest.description.match(/<upstream>(.*)<\/upstream>/i);
+    const upstreamVersion = (tmp && tmp[1]) ? tmp[1] : '';
+    const title = upstreamVersion ? `${app.manifest.title} at ${app.fqdn} updated to ${upstreamVersion} (package version ${app.manifest.version})`
+        : `${app.manifest.title} at ${app.fqdn} updated to package version ${app.manifest.version}`;
+
     actionForAllAdmins([], function (admin, done) {
-        add(admin.id, eventId, `App ${app.fqdn} updated`, `The application ${app.manifest.title} installed at https://${app.fqdn} was updated to package version ${app.manifest.version}.`, function (error) {
+        add(admin.id, eventId, title, `The application ${app.manifest.title} installed at https://${app.fqdn} was updated.\n\nChangelog:\n${app.manifest.changelog}\n\n`, function (error) {
             if (error) return callback(error);
 
             mailer.appUpdated(admin.email, app, function (error) {
