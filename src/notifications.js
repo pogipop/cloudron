@@ -144,7 +144,7 @@ function userAdded(performedBy, eventId, user, callback) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, done) {
         mailer.userAdded(admin.email, user);
-        add(admin.id, eventId, 'User added', `User ${user.fallbackEmail} was added`, done);
+        add(admin.id, eventId, `User '${user.displayName}' added`, `User ${user.username || user.email || user.fallbackEmail} was added`, done);
     }, callback);
 }
 
@@ -156,7 +156,7 @@ function userRemoved(performedBy, eventId, user, callback) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, done) {
         mailer.userRemoved(admin.email, user);
-        add(admin.id, eventId, 'User removed', `User ${user.username || user.email || user.fallbackEmail} was removed`, done);
+        add(admin.id, eventId, `User '${user.displayName}' removed`, `User ${user.username || user.email || user.fallbackEmail} was removed`, done);
     }, callback);
 }
 
@@ -167,7 +167,7 @@ function adminChanged(performedBy, eventId, user, callback) {
 
     actionForAllAdmins([ performedBy, user.id ], function (admin, done) {
         mailer.adminChanged(admin.email, user, user.admin);
-        add(admin.id, eventId, 'Admin status change', `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, done);
+        add(admin.id, eventId, `User '${user.displayName} ' ${user.admin ? 'is now an admin' : 'is no more an admin'}`, `User ${user.username || user.email || user.fallbackEmail} ${user.admin ? 'is now an admin' : 'is no more an admin'}`, done);
     }, callback);
 }
 
