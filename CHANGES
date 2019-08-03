@@ -1656,4 +1656,5 @@
 * TOTP tokens are now checked for with +- 60 seconds
 * IP based restore
 * Fix issue where task logs were not getting rotated correctly
+* Add notification for box update
 

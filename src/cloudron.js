@@ -30,6 +30,7 @@ exports = module.exports = {
 var apps = require('./apps.js'),
     assert = require('assert'),
     async = require('async'),
+    auditSource = require('./auditsource.js'),
     backups = require('./backups.js'),
     clients = require('./clients.js'),
     constants = require('./constants.js'),
@@ -48,6 +49,7 @@ var apps = require('./apps.js'),
     paths = require('./paths.js'),
     platform = require('./platform.js'),
     reverseProxy = require('./reverseproxy.js'),
+    safe = require('safetydance'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
     spawn = require('child_process').spawn,
@@ -91,7 +93,7 @@ function initialize(callback) {
 
     runStartupTasks();
 
-    callback();
+    notifyUpdate(callback);
 }
 
 function uninitialize(callback) {
@@ -113,6 +115,21 @@ function onActivated(callback) {
         platform.start,
         cron.startJobs
     ], callback);
+}
+
+function notifyUpdate(callback) {
+    assert.strictEqual(typeof callback, 'function');
+
+    const version = safe.fs.readFileSync(paths.VERSION_FILE, 'utf8');
+    if (version === constants.VERSION) return callback();
+
+    eventlog.add(eventlog.ACTION_UPDATE_FINISH, auditSource.CRON, { oldVersion: version || 'dev', newVersion: constants.VERSION }, function (error) {
+        if (error) return callback(error);
+
+        safe.fs.writeFileSync(paths.VERSION_FILE, constants.VERSION, 'utf8');
+
+        callback();
+    });
 }
 
 // each of these tasks can fail. we will add some routes to fix/re-run them

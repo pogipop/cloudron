@@ -24,6 +24,7 @@ exports = module.exports = {
 
 let assert = require('assert'),
     async = require('async'),
+    changelog = require('./changelog.js'),
     custom = require('./custom.js'),
     DatabaseError = require('./databaseerror.js'),
     debug = require('debug')('box:notifications'),
@@ -253,6 +254,19 @@ function appUpdated(eventId, app, callback) {
     }, callback);
 }
 
+function boxUpdated(oldVersion, newVersion, callback) {
+    assert.strictEqual(typeof oldVersion, 'string');
+    assert.strictEqual(typeof newVersion, 'string');
+    assert.strictEqual(typeof callback, 'function');
+
+    const changes = changelog.getChanges(newVersion);
+    const changelogMarkdown = changes.map((m) => `* ${m}\n`).join('');
+
+    actionForAllAdmins([], function (admin, done) {
+        add(admin.id, null, `Cloudron updated to v${newVersion}`, `Cloudron was updated from v${oldVersion} to v${newVersion}.\n\nChangelog:\n${changelogMarkdown}\n`, done);
+    }, callback);
+}
+
 function certificateRenewalError(eventId, vhost, errorMessage, callback) {
     assert.strictEqual(typeof eventId, 'string');
     assert.strictEqual(typeof vhost, 'string');
@@ -362,6 +376,9 @@ function onEvent(id, action, source, data, callback) {
     case eventlog.ACTION_BACKUP_FINISH:
         if (!data.errorMessage || source.username !== 'cron') return callback();
         return backupFailed(id, data.taskId, data.errorMessage, callback); // only notify for automated backups
+
+    case eventlog.ACTION_UPDATE_FINISH:
+        return boxUpdated(data.oldVersion, data.newVersion, callback);
 
     default:
         return callback();

@@ -51,6 +51,7 @@ exports = module.exports = {
     ACTION_RESTORE: 'cloudron.restore', // unused
     ACTION_START: 'cloudron.start',
     ACTION_UPDATE: 'cloudron.update',
+    ACTION_UPDATE_FINISH: 'cloudron.update.finish',
 
     ACTION_USER_ADD: 'user.add',
     ACTION_USER_LOGIN: 'user.login',
