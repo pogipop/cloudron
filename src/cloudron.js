@@ -117,6 +117,19 @@ function onActivated(callback) {
     ], callback);
 }
 
+function setUpdateSuccess(callback) {
+    tasks.listByTypePaged(tasks.TASK_UPDATE, 1, 1, function (error, results) {
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+        if (results.length !== 1) return callback(); // when hotfixing
+
+        tasks.update(results[0].id, { percent: 100, errorMessage: null }, function (error) {
+            if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
+
+            callback();
+        });
+    });
+}
+
 function notifyUpdate(callback) {
     assert.strictEqual(typeof callback, 'function');
 
@@ -124,11 +137,15 @@ function notifyUpdate(callback) {
     if (version === constants.VERSION) return callback();
 
     eventlog.add(eventlog.ACTION_UPDATE_FINISH, auditSource.CRON, { oldVersion: version || 'dev', newVersion: constants.VERSION }, function (error) {
-        if (error) return callback(error);
+        if (error) return callback(new CloudronError(CloudronError.INTERNAL_ERROR, error));
 
-        safe.fs.writeFileSync(paths.VERSION_FILE, constants.VERSION, 'utf8');
+        setUpdateSuccess(function (error) {
+            if (error) return callback(error);
 
-        callback();
+            safe.fs.writeFileSync(paths.VERSION_FILE, constants.VERSION, 'utf8');
+
+            callback();
+        });
     });
 }
 
