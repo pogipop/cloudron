@@ -567,7 +567,7 @@ function checkConfiguration(callback) {
                 markdownMessage += '\n\n';
             });
 
-            if (markdownMessage) markdownMessage += 'Email Status is checked every 30 minutes\n See the [troubleshooting docs](https://cloudron.io/documentation/troubleshooting/#mail-dns) for more information.\n';
+            if (markdownMessage) markdownMessage += 'Email Status is checked every 30 minutes.\n See the [troubleshooting docs](https://cloudron.io/documentation/troubleshooting/#mail-dns) for more information.\n';
 
             callback(null, markdownMessage); // empty message means all status checks succeeded
         });
