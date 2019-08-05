@@ -47,6 +47,6 @@ exports = module.exports = {
     CLOUDRON: CLOUDRON,
     TEST: TEST,
 
-    VERSION: process.env.BOX_ENV === 'cloudron' ? fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim() : '4.0.0-test'
+    VERSION: process.env.BOX_ENV === 'cloudron' ? fs.readFileSync(path.join(__dirname, '../VERSION'), 'utf8').trim() : '4.2.0-test'
 };
 
