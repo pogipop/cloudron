@@ -185,6 +185,7 @@ function startBox(done) {
         database._clear,
         server.start,
         ldap.start,
+        settings._setApiServerOrigin.bind(null, 'http://localhost:6060'),
 
         function (callback) {
             superagent.post(SERVER_URL + '/api/v1/cloudron/setup')
@@ -252,6 +253,7 @@ function startBox(done) {
             }, function (error) {
                 if (error) return callback(error);
                 console.log();
+                console.log('Platform is ready');
                 callback();
             });
         }
@@ -636,8 +638,6 @@ describe('App installation', function () {
         ], done);
     });
 
-    after(stopBox);
-
     var appResult = null, appEntry = null;
 
     it('can install test app', function (done) {
@@ -667,6 +667,7 @@ describe('App installation', function () {
                 expect(fake1.isDone()).to.be.ok();
                 expect(fake2.isDone()).to.be.ok();
                 APP_ID = res.body.id;
+
                 checkInstallStatus();
             });
     });
@@ -691,11 +692,11 @@ describe('App installation', function () {
         docker.getContainer(appEntry.containerId).inspect(function (error, data) {
             expect(error).to.not.be.ok();
             expect(data.Config.ExposedPorts['7777/tcp']).to.eql({ });
-            expect(data.Config.Env).to.contain('WEBADMIN_ORIGIN=' + settings.adminOrigin());
-            expect(data.Config.Env).to.contain('API_ORIGIN=' + settings.adminOrigin());
+            expect(data.Config.Env).to.contain('CLOUDRON_WEBADMIN_ORIGIN=' + settings.adminOrigin());
+            expect(data.Config.Env).to.contain('CLOUDRON_API_ORIGIN=' + settings.adminOrigin());
             expect(data.Config.Env).to.contain('CLOUDRON=1');
-            expect(data.Config.Env).to.contain('APP_ORIGIN=https://' + APP_LOCATION + '.' + DOMAIN_0.domain);
-            expect(data.Config.Env).to.contain('APP_DOMAIN=' + APP_LOCATION + '.' + DOMAIN_0.domain);
+            expect(data.Config.Env).to.contain('CLOUDRON_APP_ORIGIN=https://' + APP_LOCATION + '.' + DOMAIN_0.domain);
+            expect(data.Config.Env).to.contain('CLOUDRON_APP_DOMAIN=' + APP_LOCATION + '.' + DOMAIN_0.domain);
             // Hostname must not be set of app fqdn or app location!
             expect(data.Config.Hostname).to.not.contain(APP_LOCATION);
             expect(data.Config.Env).to.contain('ECHO_SERVER_PORT=7171');
@@ -784,15 +785,15 @@ describe('App installation', function () {
                 expect(error).to.not.be.ok();
                 expect(client.id.length).to.be(40); // cid- + 32 hex chars (128 bits) + 4 hyphens
                 expect(client.clientSecret.length).to.be(256); // 32 hex chars (8 * 256 bits)
-                expect(data.Config.Env).to.contain('OAUTH_CLIENT_ID=' + client.id);
-                expect(data.Config.Env).to.contain('OAUTH_CLIENT_SECRET=' + client.clientSecret);
+                expect(data.Config.Env).to.contain('CLOUDRON_OAUTH_CLIENT_ID=' + client.id);
+                expect(data.Config.Env).to.contain('CLOUDRON_OAUTH_CLIENT_SECRET=' + client.clientSecret);
                 done();
             });
         });
     });
 
-    it('installation - app can populate addons', function (done) {
-        superagent.get('http://localhost:' + appEntry.httpPort + '/populate_addons').end(function (err, res) {
+    xit('installation - app can populate addons', function (done) {
+        superagent.get(`http://localhost:'${appEntry.httpPort}/populate_addons`).end(function (err, res) {
             expect(!err).to.be.ok();
             expect(res.statusCode).to.equal(200);
             for (var key in res.body) {
@@ -802,7 +803,7 @@ describe('App installation', function () {
         });
     });
 
-    it('installation - app can check addons', function (done) {
+    xit('installation - app can check addons', function (done) {
         console.log('This test can take a while as it waits for scheduler addon to tick 3');
         checkAddons(appEntry, done);
     });
@@ -927,7 +928,7 @@ describe('App installation', function () {
         checkStartState();
     });
 
-    it('installation - app can check addons', function (done) {
+    xit('installation - app can check addons', function (done) {
         console.log('This test can take a while as it waits for scheduler addon to tick 2');
         checkAddons(appEntry, done);
     });
@@ -1087,7 +1088,7 @@ describe('App installation', function () {
         checkRedis('redis-' + APP_ID, done);
     });
 
-    it('installation - app can check addons', function (done) {
+    xit('installation - app can check addons', function (done) {
         console.log('This test can take a while as it waits for scheduler addon to tick 4');
         checkAddons(appEntry, done);
     });
@@ -1167,4 +1168,7 @@ describe('App installation', function () {
             done();
         });
     });
+
+    // this is here so that --bail does not stop the box code
+    it('stop box', stopBox);
 });
