@@ -58,6 +58,7 @@ var addons = require('./addons.js'),
     path = require('path'),
     settings = require('./settings.js'),
     shell = require('./shell.js'),
+    safe = require('safetydance'),
     spawn = child_process.spawn,
     util = require('util'),
     _ = require('underscore');
@@ -129,22 +130,31 @@ function pullImage(manifest, callback) {
 
     // Use docker CLI here to support downloading of private repos. for dockerode, we have to use
     // https://github.com/apocas/dockerode#pull-from-private-repos
-    shell.spawn('pullImage', '/usr/bin/docker', [ 'pull', manifest.dockerImage ], {}, function (error) {
-        if (error) {
-            debug(`pullImage: Error pulling image ${manifest.dockerImage} of ${manifest.id}: ${error.message}`);
-            return callback(new Error('Failed to pull image. Please check if disk is full or try again in sometime.'));
-        }
+    docker.pull(manifest.dockerImage, function (error, stream) {
+        if (error) return callback(new DockerError(DockerError.EXTERNAL_ERROR, 'Error connecting to docker. statusCode: ' + error.statusCode));
 
-        var image = docker.getImage(manifest.dockerImage);
+        // https://github.com/dotcloud/docker/issues/1074 says each status message
+        // is emitted as a chunk
+        stream.on('data', function (chunk) {
+            var data = safe.JSON.parse(chunk) || { };
+            debug('pullImage %s: %j', manifest.id, data);
 
-        image.inspect(function (err, data) {
-            if (err) return callback(new Error('Error inspecting image:' + err.message));
-            if (!data || !data.Config) return callback(new Error('Missing Config in image:' + JSON.stringify(data, null, 4)));
-            if (!data.Config.Entrypoint && !data.Config.Cmd) return callback(new Error('Only images with entry point are allowed'));
+            // The data.status here is useless because this is per layer as opposed to per image
+            if (!data.status && data.error) {
+                debug('pullImage error %s: %s', manifest.id, data.errorDetail.message);
+            }
+        });
 
-            if (data.Config.ExposedPorts) debug('This image of %s exposes ports: %j', manifest.id, data.Config.ExposedPorts);
+        stream.on('end', function () {
+            debug('downloaded image %s of %s successfully', manifest.dockerImage, manifest.id);
 
             callback(null);
+        });
+
+        stream.on('error', function (error) {
+            debug('error pulling image %s of %s: %j', manifest.dockerImage, manifest.id, error);
+
+            callback(new DockerError(DockerError.EXTERNAL_ERROR, error.message));
         });
     });
 }
