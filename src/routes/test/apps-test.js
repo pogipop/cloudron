@@ -42,7 +42,7 @@ var SERVER_URL = 'http://localhost:' + constants.PORT;
 
 // Test image information
 var TEST_IMAGE_REPO = 'cloudron/test';
-var TEST_IMAGE_TAG = '25.15.2';
+var TEST_IMAGE_TAG = '25.19.0';
 var TEST_IMAGE = TEST_IMAGE_REPO + ':' + TEST_IMAGE_TAG;
 
 const DOMAIN_0 = {
@@ -792,9 +792,9 @@ describe('App installation', function () {
         });
     });
 
-    xit('installation - app can populate addons', function (done) {
-        superagent.get(`http://localhost:'${appEntry.httpPort}/populate_addons`).end(function (err, res) {
-            expect(!err).to.be.ok();
+    it('installation - app can populate addons', function (done) {
+        superagent.get(`http://localhost:${appEntry.httpPort}/populate_addons`).end(function (error, res) {
+            expect(!error).to.be.ok();
             expect(res.statusCode).to.equal(200);
             for (var key in res.body) {
                 expect(res.body[key]).to.be('OK');
@@ -803,7 +803,7 @@ describe('App installation', function () {
         });
     });
 
-    xit('installation - app can check addons', function (done) {
+    it('installation - app can check addons', function (done) {
         console.log('This test can take a while as it waits for scheduler addon to tick 3');
         checkAddons(appEntry, done);
     });
@@ -928,7 +928,7 @@ describe('App installation', function () {
         checkStartState();
     });
 
-    xit('installation - app can check addons', function (done) {
+    it('installation - app can check addons', function (done) {
         console.log('This test can take a while as it waits for scheduler addon to tick 2');
         checkAddons(appEntry, done);
     });
@@ -1088,7 +1088,7 @@ describe('App installation', function () {
         checkRedis('redis-' + APP_ID, done);
     });
 
-    xit('installation - app can check addons', function (done) {
+    it('installation - app can check addons', function (done) {
         console.log('This test can take a while as it waits for scheduler addon to tick 4');
         checkAddons(appEntry, done);
     });
