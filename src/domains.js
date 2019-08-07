@@ -493,15 +493,17 @@ function prepareDashboardDomain(domain, auditSource, progressCallback, callback)
     get(domain, function (error, domainObject) {
         if (error) return callback(error);
 
+        const adminFqdn = fqdn(constants.ADMIN_LOCATION, domainObject);
+
         sysinfo.getPublicIp(function (error, ip) {
             if (error) return callback(new DomainsError(DomainsError.EXTERNAL_ERROR, error.message));
 
             async.series([
-                (done) => { progressCallback({ percent: 10, message: 'Updating DNS' }); done(); },
+                (done) => { progressCallback({ percent: 10, message: `Updating DNS of ${adminFqdn}` }); done(); },
                 upsertDnsRecords.bind(null, constants.ADMIN_LOCATION, domain, 'A', [ ip ]),
-                (done) => { progressCallback({ percent: 40, message: 'Waiting for DNS' }); done(); },
+                (done) => { progressCallback({ percent: 40, message: `Waiting for DNS of ${adminFqdn}` }); done(); },
                 waitForDnsRecord.bind(null, constants.ADMIN_LOCATION, domain, 'A', ip, { interval: 30000, times: 50000 }),
-                (done) => { progressCallback({ percent: 70, message: 'Getting certificate' }); done(); },
+                (done) => { progressCallback({ percent: 70, message: `Getting certificate of ${adminFqdn}` }); done(); },
                 reverseProxy.ensureCertificate.bind(null, fqdn(constants.ADMIN_LOCATION, domainObject), domain, auditSource)
             ], function (error) {
                 if (error) return callback(error);
