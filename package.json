@@ -40,7 +40,7 @@
     "js-yaml": "^3.13.1",
     "json": "^9.0.6",
     "ldapjs": "^1.0.2",
-    "lodash": "^4.17.11",
+    "lodash": "^4.17.19",
     "lodash.chunk": "^4.2.0",
     "mime": "^2.4.4",
     "moment-timezone": "^0.5.25",
