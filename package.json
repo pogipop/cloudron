@@ -74,7 +74,7 @@
     "tar-fs": "github:cloudron-io/tar-fs#ignore_stat_error",
     "tar-stream": "^2.1.0",
     "tldjs": "^2.3.1",
-    "underscore": "^1.9.1",
+    "underscore": "^1.12.1",
     "uuid": "^3.3.2",
     "valid-url": "^1.0.9",
     "validator": "^11.0.0",
